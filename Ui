@@ -19,21 +19,14 @@ local function createStroke(p, thickness, color)
     return stroke
 end
 
-local function createGradient(p, color1, color2)
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, color1), ColorSequenceKeypoint.new(1, color2)})
-    gradient.Parent = p
-    return gradient
-end
-
 local function createProfileImage(userId, size)
-    local img = Instance.new("ImageButton")
-    img.Size = size or UDim2.new(0, 48, 0, 48)
-    img.BackgroundTransparency = 1
+    local img = Instance.new("ImageLabel")
+    img.Size = size or UDim2.new(0, 45, 0, 45)
+    img.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    img.BackgroundTransparency = 0
     img.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=100&height=100&format=png"
     img.ScaleType = Enum.ScaleType.Fit
     img.ClipsDescendants = true
-    img.AutoButtonColor = true
     return img
 end
 
@@ -44,213 +37,145 @@ ScreenGui.Parent = player:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 380, 0, 480)
-Frame.Position = UDim2.new(0.5, -190, 0.5, -240)
-Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Frame.Size = UDim2.new(0, 280, 0, 320)
+Frame.Position = UDim2.new(0.5, -140, 0.5, -160)
+Frame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
-createUICorner(Frame, 20)
-createStroke(Frame, 1, Color3.fromRGB(60, 60, 70))
-
-local GlowFrame = Instance.new("Frame")
-GlowFrame.Size = UDim2.new(1, 0, 1, 0)
-GlowFrame.Position = UDim2.new(0, 0, 0, 0)
-GlowFrame.BackgroundTransparency = 1
-GlowFrame.Parent = Frame
+createUICorner(Frame, 16)
+createStroke(Frame, 1, Color3.fromRGB(50, 50, 60))
 
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 60)
-Header.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+Header.Size = UDim2.new(1, 0, 0, 50)
+Header.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 Header.BorderSizePixel = 0
 Header.Parent = Frame
-createUICorner(Header, 20)
+createUICorner(Header, 16)
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -80, 1, 0)
-Title.Position = UDim2.new(0, 20, 0, 0)
+Title.Size = UDim2.new(1, -45, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "Oyuncu Bulucu"
+Title.Text = "Sunucu Arkadaşı"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 22
+Title.TextSize = 16
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
-local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(1, -80, 0, 20)
-Subtitle.Position = UDim2.new(0, 20, 0, 32)
-Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Aynı sunucudaki oyuncuyu bul"
-Subtitle.Font = Enum.Font.Gotham
-Subtitle.TextSize = 12
-Subtitle.TextColor3 = Color3.fromRGB(150, 150, 160)
-Subtitle.TextXAlignment = Enum.TextXAlignment.Left
-Subtitle.Parent = Header
-
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 32, 0, 32)
-MinimizeButton.Position = UDim2.new(1, -72, 0, 14)
-MinimizeButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-MinimizeButton.Text = "−"
-MinimizeButton.Font = Enum.Font.GothamBold
-MinimizeButton.TextSize = 24
-MinimizeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-MinimizeButton.AutoButtonColor = false
-MinimizeButton.Parent = Header
-createUICorner(MinimizeButton, 16)
-
 local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 32, 0, 32)
-CloseButton.Position = UDim2.new(1, -36, 0, 14)
-CloseButton.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-CloseButton.Text = "✕"
+CloseButton.Size = UDim2.new(0, 28, 0, 28)
+CloseButton.Position = UDim2.new(1, -38, 0, 11)
+CloseButton.BackgroundColor3 = Color3.fromRGB(45, 45, 52)
+CloseButton.Text = "X"
 CloseButton.Font = Enum.Font.GothamBold
-CloseButton.TextSize = 20
+CloseButton.TextSize = 16
 CloseButton.TextColor3 = Color3.fromRGB(200, 200, 200)
 CloseButton.AutoButtonColor = false
 CloseButton.Parent = Header
-createUICorner(CloseButton, 16)
+createUICorner(CloseButton, 14)
 
 CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
 local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1, -40, 1, -100)
-ContentFrame.Position = UDim2.new(0, 20, 0, 80)
-ContentFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-ContentFrame.BorderSizePixel = 0
+ContentFrame.Size = UDim2.new(1, -24, 1, -70)
+ContentFrame.Position = UDim2.new(0, 12, 0, 58)
+ContentFrame.BackgroundTransparency = 1
 ContentFrame.Parent = Frame
-createUICorner(ContentFrame, 16)
 
-local StatusCard = Instance.new("Frame")
-StatusCard.Size = UDim2.new(1, -20, 0, 100)
-StatusCard.Position = UDim2.new(0, 10, 0, 15)
-StatusCard.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-StatusCard.BorderSizePixel = 0
-StatusCard.Parent = ContentFrame
-createUICorner(StatusCard, 12)
+local FoundCard = Instance.new("Frame")
+FoundCard.Size = UDim2.new(1, 0, 0, 110)
+FoundCard.Position = UDim2.new(0, 0, 0, 0)
+FoundCard.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+FoundCard.BorderSizePixel = 0
+FoundCard.Visible = false
+FoundCard.Parent = ContentFrame
+createUICorner(FoundCard, 14)
 
-local LoadingSpinner = Instance.new("Frame")
-LoadingSpinner.Size = UDim2.new(0, 40, 0, 40)
-LoadingSpinner.Position = UDim2.new(0.5, -20, 0, 30)
-LoadingSpinner.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-LoadingSpinner.BackgroundTransparency = 0.5
-LoadingSpinner.Parent = StatusCard
-createUICorner(LoadingSpinner, 20)
-
-local SpinnerCircle = Instance.new("Frame")
-SpinnerCircle.Size = UDim2.new(0, 30, 0, 30)
-SpinnerCircle.Position = UDim2.new(0.5, -15, 0.5, -15)
-SpinnerCircle.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-SpinnerCircle.BackgroundTransparency = 0
-SpinnerCircle.Parent = LoadingSpinner
-createUICorner(SpinnerCircle, 15)
-
-local StatusText = Instance.new("TextLabel")
-StatusText.Size = UDim2.new(1, -20, 0, 20)
-StatusText.Position = UDim2.new(0, 10, 0, 75)
-StatusText.BackgroundTransparency = 1
-StatusText.Text = "Sunucu taranıyor..."
-StatusText.Font = Enum.Font.GothamBold
-StatusText.TextSize = 14
-StatusText.TextColor3 = Color3.fromRGB(0, 150, 255)
-StatusText.Parent = StatusCard
-
-local ResultCard = Instance.new("Frame")
-ResultCard.Size = UDim2.new(1, -20, 0, 140)
-ResultCard.Position = UDim2.new(0, 10, 0, 130)
-ResultCard.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-ResultCard.BorderSizePixel = 0
-ResultCard.Visible = false
-ResultCard.Parent = ContentFrame
-createUICorner(ResultCard, 12)
-
-local PlayerAvatar = Instance.new("ImageLabel")
-PlayerAvatar.Size = UDim2.new(0, 70, 0, 70)
-PlayerAvatar.Position = UDim2.new(0, 20, 0, 20)
-PlayerAvatar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-PlayerAvatar.BackgroundTransparency = 0
-PlayerAvatar.Parent = ResultCard
-createUICorner(PlayerAvatar, 35)
+local PlayerAvatar = createProfileImage(player.UserId, UDim2.new(0, 55, 0, 55))
+PlayerAvatar.Position = UDim2.new(0, 12, 0, 12)
+PlayerAvatar.Parent = FoundCard
+createUICorner(PlayerAvatar, 27)
 
 local PlayerName = Instance.new("TextLabel")
-PlayerName.Size = UDim2.new(1, -110, 0, 28)
-PlayerName.Position = UDim2.new(0, 105, 0, 25)
+PlayerName.Size = UDim2.new(1, -85, 0, 24)
+PlayerName.Position = UDim2.new(0, 80, 0, 16)
 PlayerName.BackgroundTransparency = 1
 PlayerName.Text = ""
 PlayerName.Font = Enum.Font.GothamBold
-PlayerName.TextSize = 20
+PlayerName.TextSize = 18
 PlayerName.TextColor3 = Color3.fromRGB(255, 255, 255)
 PlayerName.TextXAlignment = Enum.TextXAlignment.Left
-PlayerName.Parent = ResultCard
+PlayerName.Parent = FoundCard
 
 local PlayerIdLabel = Instance.new("TextLabel")
-PlayerIdLabel.Size = UDim2.new(1, -110, 0, 18)
-PlayerIdLabel.Position = UDim2.new(0, 105, 0, 55)
+PlayerIdLabel.Size = UDim2.new(1, -85, 0, 16)
+PlayerIdLabel.Position = UDim2.new(0, 80, 0, 44)
 PlayerIdLabel.BackgroundTransparency = 1
 PlayerIdLabel.Text = ""
 PlayerIdLabel.Font = Enum.Font.Gotham
-PlayerIdLabel.TextSize = 12
-PlayerIdLabel.TextColor3 = Color3.fromRGB(130, 130, 140)
+PlayerIdLabel.TextSize = 11
+PlayerIdLabel.TextColor3 = Color3.fromRGB(130, 130, 145)
 PlayerIdLabel.TextXAlignment = Enum.TextXAlignment.Left
-PlayerIdLabel.Parent = ResultCard
+PlayerIdLabel.Parent = FoundCard
 
 local JoinTime = Instance.new("TextLabel")
-JoinTime.Size = UDim2.new(1, -110, 0, 18)
-JoinTime.Position = UDim2.new(0, 105, 0, 78)
+JoinTime.Size = UDim2.new(1, -85, 0, 14)
+JoinTime.Position = UDim2.new(0, 80, 0, 64)
 JoinTime.BackgroundTransparency = 1
 JoinTime.Text = ""
 JoinTime.Font = Enum.Font.Gotham
-JoinTime.TextSize = 12
-JoinTime.TextColor3 = Color3.fromRGB(100, 100, 110)
+JoinTime.TextSize = 10
+JoinTime.TextColor3 = Color3.fromRGB(100, 100, 115)
 JoinTime.TextXAlignment = Enum.TextXAlignment.Left
-JoinTime.Parent = ResultCard
+JoinTime.Parent = FoundCard
 
-local FoundBadge = Instance.new("Frame")
-FoundBadge.Size = UDim2.new(0, 80, 0, 28)
-FoundBadge.Position = UDim2.new(1, -95, 0, 98)
-FoundBadge.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
-FoundBadge.BackgroundTransparency = 0
-FoundBadge.Parent = ResultCard
-createUICorner(FoundBadge, 14)
+local Badge = Instance.new("Frame")
+Badge.Size = UDim2.new(0, 70, 0, 24)
+Badge.Position = UDim2.new(1, -82, 0, 74)
+Badge.BackgroundColor3 = Color3.fromRGB(0, 160, 90)
+Badge.BackgroundTransparency = 0
+Badge.Parent = FoundCard
+createUICorner(Badge, 12)
 
 local BadgeText = Instance.new("TextLabel")
 BadgeText.Size = UDim2.new(1, 0, 1, 0)
 BadgeText.BackgroundTransparency = 1
-BadgeText.Text = "BULUNDU ✓"
+BadgeText.Text = "BAĞLANDI"
 BadgeText.Font = Enum.Font.GothamBold
-BadgeText.TextSize = 12
+BadgeText.TextSize = 10
 BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
-BadgeText.Parent = FoundBadge
+BadgeText.Parent = Badge
 
 local EmptyCard = Instance.new("Frame")
-EmptyCard.Size = UDim2.new(1, -20, 0, 120)
-EmptyCard.Position = UDim2.new(0, 10, 0, 130)
-EmptyCard.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+EmptyCard.Size = UDim2.new(1, 0, 0, 100)
+EmptyCard.Position = UDim2.new(0, 0, 0, 0)
+EmptyCard.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 EmptyCard.BorderSizePixel = 0
-EmptyCard.Visible = false
+EmptyCard.Visible = true
 EmptyCard.Parent = ContentFrame
-createUICorner(EmptyCard, 12)
+createUICorner(EmptyCard, 14)
 
 local EmptyIcon = Instance.new("TextLabel")
-EmptyIcon.Size = UDim2.new(0, 50, 0, 50)
-EmptyIcon.Position = UDim2.new(0.5, -25, 0, 25)
+EmptyIcon.Size = UDim2.new(0, 32, 0, 32)
+EmptyIcon.Position = UDim2.new(0.5, -16, 0, 20)
 EmptyIcon.BackgroundTransparency = 1
-EmptyIcon.Text = "🔍"
+EmptyIcon.Text = "👤"
 EmptyIcon.Font = Enum.Font.GothamBold
-EmptyIcon.TextSize = 40
-EmptyIcon.TextColor3 = Color3.fromRGB(80, 80, 90)
+EmptyIcon.TextSize = 28
+EmptyIcon.TextColor3 = Color3.fromRGB(70, 70, 85)
 EmptyIcon.Parent = EmptyCard
 
 local EmptyText = Instance.new("TextLabel")
-EmptyText.Size = UDim2.new(1, -40, 0, 40)
-EmptyText.Position = UDim2.new(0, 20, 0, 80)
+EmptyText.Size = UDim2.new(1, -20, 0, 40)
+EmptyText.Position = UDim2.new(0, 10, 0, 58)
 EmptyText.BackgroundTransparency = 1
-EmptyText.Text = "Bu sunucuda başka oyuncu yok"
+EmptyText.Text = "Aynı sunucuda kimse yok"
 EmptyText.Font = Enum.Font.Gotham
-EmptyText.TextSize = 14
-EmptyText.TextColor3 = Color3.fromRGB(100, 100, 110)
+EmptyText.TextSize = 12
+EmptyText.TextColor3 = Color3.fromRGB(100, 100, 115)
 EmptyText.TextWrapped = true
 EmptyText.Parent = EmptyCard
 
@@ -350,95 +275,34 @@ local function findSameJobIdPlayer()
     return foundPlayer
 end
 
-local spinAngle = 0
-local spinConnection
-
-local function startSpinner()
-    if spinConnection then spinConnection:Disconnect() end
-    spinConnection = game:GetService("RunService").RenderStepped:Connect(function(dt)
-        spinAngle = spinAngle + dt * 10
-        SpinnerCircle.Rotation = spinAngle * 57.2958
-    end)
-end
-
-local function stopSpinner()
-    if spinConnection then
-        spinConnection:Disconnect()
-        spinConnection = nil
-    end
-end
-
 local function updateDisplay()
     local found = findSameJobIdPlayer()
     
     if found then
-        ResultCard.Visible = true
+        FoundCard.Visible = true
         EmptyCard.Visible = false
-        StatusCard.Visible = true
-        StatusText.Text = "✓ Oyuncu bulundu!"
-        StatusText.TextColor3 = Color3.fromRGB(0, 200, 100)
-        LoadingSpinner.BackgroundTransparency = 1
-        SpinnerCircle.BackgroundTransparency = 1
-        stopSpinner()
         
         PlayerName.Text = found.username
-        PlayerIdLabel.Text = "User ID: " .. found.userId
+        PlayerIdLabel.Text = "ID: " .. found.userId
         PlayerAvatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. found.userId .. "&width=100&height=100&format=png"
         
-        local joinDate = os.date("%H:%M:%S", found.timestamp)
-        JoinTime.Text = "Sunucuya katılım: " .. joinDate
+        local joinDate = os.date("%H:%M", found.timestamp)
+        JoinTime.Text = "katılım: " .. joinDate
     else
-        ResultCard.Visible = false
+        FoundCard.Visible = false
         EmptyCard.Visible = true
-        StatusCard.Visible = true
-        StatusText.Text = "Aranıyor..."
-        StatusText.TextColor3 = Color3.fromRGB(0, 150, 255)
-        LoadingSpinner.BackgroundTransparency = 0.5
-        SpinnerCircle.BackgroundTransparency = 0
-        startSpinner()
     end
 end
 
-local function animateButtons()
-    local buttons = {MinimizeButton, CloseButton}
-    for _, btn in ipairs(buttons) do
-        btn.MouseEnter:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = Color3.fromRGB(65, 65, 70)}):Play()
-        end)
-        btn.MouseLeave:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = Color3.fromRGB(45, 45, 50)}):Play()
-        end)
-    end
-end
-
-local MinimizedIcon
-local function createMinimizedIcon()
-    if MinimizedIcon then MinimizedIcon:Destroy() end
-    MinimizedIcon = Instance.new("ImageButton")
-    MinimizedIcon.Size = UDim2.new(0, 48, 0, 48)
-    MinimizedIcon.Position = UDim2.new(0, 20, 1, -70)
-    MinimizedIcon.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    MinimizedIcon.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. player.UserId .. "&width=100&height=100&format=png"
-    MinimizedIcon.ScaleType = Enum.ScaleType.Fit
-    MinimizedIcon.Parent = ScreenGui
-    createUICorner(MinimizedIcon, 24)
-    createStroke(MinimizedIcon, 2, Color3.fromRGB(0, 150, 255))
-    
-    MinimizedIcon.MouseButton1Click:Connect(function()
-        MinimizedIcon:Destroy()
-        Frame.Visible = true
-    end)
-end
-
-MinimizeButton.MouseButton1Click:Connect(function()
-    Frame.Visible = false
-    createMinimizedIcon()
+CloseButton.MouseEnter:Connect(function()
+    TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = Color3.fromRGB(65, 65, 75)}):Play()
 end)
 
-animateButtons()
+CloseButton.MouseLeave:Connect(function()
+    TweenService:Create(CloseButton, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = Color3.fromRGB(45, 45, 52)}):Play()
+end)
 
 local function main()
-    startSpinner()
     local success = sendJobId()
     if success then
         wait(1)
@@ -449,14 +313,9 @@ local function main()
             updateDisplay()
         end
     else
-        StatusText.Text = "Bağlantı hatası!"
-        StatusText.TextColor3 = Color3.fromRGB(255, 80, 80)
-        LoadingSpinner.BackgroundTransparency = 1
-        SpinnerCircle.BackgroundTransparency = 1
-        stopSpinner()
-        
-        EmptyCard.Visible = true
-        EmptyText.Text = "Veritabanına bağlanılamadı"
+        EmptyText.Text = "Bağlantı hatası"
+        EmptyIcon.Text = "⚠"
+        EmptyIcon.TextColor3 = Color3.fromRGB(200, 100, 80)
     end
 end
 
