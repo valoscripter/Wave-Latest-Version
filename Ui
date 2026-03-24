@@ -1,0 +1,392 @@
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local API_URL = "https://sydearr-chat1-default-rtdb.firebaseio.com/players.json"
+
+local function createUICorner(p, r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 8)
+    c.Parent = p
+    return c
+end
+
+local function createProfileImage(userId, size)
+    local img = Instance.new("ImageButton")
+    img.Size = size or UDim2.new(0, 36, 0, 36)
+    img.BackgroundTransparency = 0
+    img.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    img.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=48&height=48&format=png"
+    img.ScaleType = Enum.ScaleType.Fit
+    img.ClipsDescendants = true
+    img.AutoButtonColor = true
+    return img
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "JobIdSystem"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 450, 0, 500)
+Frame.Position = UDim2.new(0.5, -225, 0.5, -250)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
+createUICorner(Frame, 12)
+
+local function notify(content, isError)
+    local msg = Instance.new("TextLabel")
+    msg.Size = UDim2.new(0, 300, 0, 40)
+    msg.Position = UDim2.new(0.5, -150, 0, -50)
+    msg.AnchorPoint = Vector2.new(0.5, 0)
+    msg.BackgroundColor3 = isError and Color3.fromRGB(255, 70, 70) or Color3.fromRGB(0, 150, 255)
+    msg.TextColor3 = Color3.new(1, 1, 1)
+    msg.Font = Enum.Font.GothamBold
+    msg.TextSize = 18
+    msg.TextWrapped = true
+    msg.TextScaled = false
+    msg.ClipsDescendants = true
+    msg.Text = content
+    msg.Parent = ScreenGui
+    createUICorner(msg, 8)
+    msg:TweenPosition(UDim2.new(0.5, -150, 0, 10), "Out", "Quad", 0.4, true)
+    task.delay(3, function()
+        msg:TweenPosition(UDim2.new(0.5, -150, 0, -50), "In", "Quad", 0.4, true)
+        task.delay(0.4, function()
+            msg:Destroy()
+        end)
+    end)
+end
+
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 28, 0, 28)
+MinimizeButton.Position = UDim2.new(1, -70, 0, 7)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+MinimizeButton.Text = "-"
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.TextSize = 20
+MinimizeButton.TextColor3 = Color3.new(1, 1, 1)
+MinimizeButton.AutoButtonColor = false
+MinimizeButton.Parent = Frame
+createUICorner(MinimizeButton, 6)
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 28, 0, 28)
+CloseButton.Position = UDim2.new(1, -35, 0, 7)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+CloseButton.Text = "X"
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 18
+CloseButton.TextColor3 = Color3.new(1, 1, 1)
+CloseButton.AutoButtonColor = false
+CloseButton.Parent = Frame
+createUICorner(CloseButton, 6)
+
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundTransparency = 1
+Title.Text = "JobId Sistemi"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 24
+Title.TextColor3 = Color3.fromRGB(180, 180, 180)
+Title.Parent = Frame
+
+local PlayerListFrame = Instance.new("ScrollingFrame")
+PlayerListFrame.Size = UDim2.new(1, -20, 1, -140)
+PlayerListFrame.Position = UDim2.new(0, 10, 0, 50)
+PlayerListFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+PlayerListFrame.BorderSizePixel = 0
+PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+PlayerListFrame.ScrollBarThickness = 8
+PlayerListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+PlayerListFrame.Parent = Frame
+createUICorner(PlayerListFrame, 10)
+
+local UIList = Instance.new("UIListLayout")
+UIList.Parent = PlayerListFrame
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Padding = UDim.new(0, 8)
+
+local UIPadding = Instance.new("UIPadding")
+UIPadding.PaddingTop = UDim.new(0, 10)
+UIPadding.PaddingBottom = UDim.new(0, 10)
+UIPadding.PaddingLeft = UDim.new(0, 10)
+UIPadding.PaddingRight = UDim.new(0, 10)
+UIPadding.Parent = PlayerListFrame
+
+local InfoFrame = Instance.new("Frame")
+InfoFrame.Size = UDim2.new(1, -20, 0, 70)
+InfoFrame.Position = UDim2.new(0, 10, 1, -80)
+InfoFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+InfoFrame.BackgroundTransparency = 0.5
+InfoFrame.Parent = Frame
+createUICorner(InfoFrame, 10)
+
+local JobIdLabel = Instance.new("TextLabel")
+JobIdLabel.Size = UDim2.new(1, -20, 0, 30)
+JobIdLabel.Position = UDim2.new(0, 10, 0, 10)
+JobIdLabel.BackgroundTransparency = 1
+JobIdLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+JobIdLabel.Font = Enum.Font.Gotham
+JobIdLabel.TextSize = 16
+JobIdLabel.TextXAlignment = Enum.TextXAlignment.Left
+JobIdLabel.Text = "Job ID: Yükleniyor..."
+JobIdLabel.Parent = InfoFrame
+
+local RefreshButton = Instance.new("TextButton")
+RefreshButton.Size = UDim2.new(0, 100, 0, 30)
+RefreshButton.Position = UDim2.new(1, -110, 0, 10)
+RefreshButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+RefreshButton.TextColor3 = Color3.new(1, 1, 1)
+RefreshButton.Text = "Yenile"
+RefreshButton.Font = Enum.Font.GothamBold
+RefreshButton.TextSize = 16
+RefreshButton.Parent = InfoFrame
+createUICorner(RefreshButton, 8)
+
+local function httpRequest(args)
+    if syn and syn.request then
+        return syn.request(args)
+    elseif http_request then
+        return http_request(args)
+    elseif request then
+        return request(args)
+    else
+        local ok, res
+        if args.Method == "POST" then
+            ok, res = pcall(function()
+                return HttpService:PostAsync(args.Url, args.Body, Enum.HttpContentType.ApplicationJson)
+            end)
+        elseif args.Method == "DELETE" then
+            ok, res = pcall(function()
+                return HttpService:RequestAsync(args)
+            end)
+        else
+            ok, res = pcall(function()
+                return HttpService:GetAsync(args.Url)
+            end)
+        end
+        if ok then
+            return {Body = res}
+        else
+            return nil, res
+        end
+    end
+end
+
+local function sendPlayerData()
+    local jobId = game.JobId or "Offline"
+    local data = {
+        username = player.Name,
+        userId = player.UserId,
+        jobId = jobId,
+        timestamp = os.time()
+    }
+    local json = HttpService:JSONEncode(data)
+    local res, err = httpRequest({
+        Url = API_URL .. "?orderBy=\"userId\"&equalTo=" .. player.UserId,
+        Method = "GET"
+    })
+    
+    if res and res.Body then
+        local ok, existingData = pcall(function()
+            return HttpService:JSONDecode(res.Body)
+        end)
+        
+        local updateUrl = API_URL
+        if ok and existingData then
+            for key, value in pairs(existingData) do
+                if value.userId == player.UserId then
+                    updateUrl = "https://sydearr-chat1-default-rtdb.firebaseio.com/players/" .. key .. ".json"
+                    break
+                end
+            end
+        end
+        
+        httpRequest({
+            Url = updateUrl,
+            Method = "PUT",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = json
+        })
+    else
+        httpRequest({
+            Url = API_URL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = json
+        })
+    end
+    
+    JobIdLabel.Text = "Job ID: " .. jobId
+    notify("Job ID kaydedildi: " .. jobId)
+end
+
+local function createPlayerCard(playerData, currentJobId)
+    local container = Instance.new("Frame")
+    container.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    container.BorderSizePixel = 0
+    container.AutomaticSize = Enum.AutomaticSize.Y
+    container.Size = UDim2.new(1, 0, 0, 60)
+    createUICorner(container, 10)
+    
+    local profileImg = createProfileImage(playerData.userId)
+    profileImg.Position = UDim2.new(0, 8, 0, 12)
+    profileImg.Parent = container
+    
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(0.5, 0, 0, 22)
+    nameLabel.Position = UDim2.new(0, 52, 0, 8)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 18
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Text = playerData.username
+    nameLabel.Parent = container
+    
+    local jobIdLabel = Instance.new("TextLabel")
+    jobIdLabel.Size = UDim2.new(0.6, 0, 0, 20)
+    jobIdLabel.Position = UDim2.new(0, 52, 0, 32)
+    jobIdLabel.BackgroundTransparency = 1
+    jobIdLabel.Font = Enum.Font.Gotham
+    jobIdLabel.TextSize = 14
+    jobIdLabel.TextXAlignment = Enum.TextXAlignment.Left
+    jobIdLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    jobIdLabel.Text = "Job ID: " .. playerData.jobId
+    jobIdLabel.Parent = container
+    
+    local guideBadge = Instance.new("TextLabel")
+    if playerData.jobId == currentJobId and playerData.userId ~= game.Players.LocalPlayer.UserId then
+        guideBadge.Size = UDim2.new(0, 50, 0, 24)
+        guideBadge.Position = UDim2.new(1, -60, 0, 18)
+        guideBadge.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
+        guideBadge.TextColor3 = Color3.new(1, 1, 1)
+        guideBadge.Font = Enum.Font.GothamBold
+        guideBadge.TextSize = 14
+        guideBadge.Text = "GUIDE"
+        guideBadge.Parent = container
+        createUICorner(guideBadge, 12)
+        
+        nameLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    else
+        nameLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
+    end
+    
+    return container
+end
+
+local existingPlayers = {}
+local currentJobId = game.JobId or "Offline"
+
+local function updatePlayerList()
+    local res, err = httpRequest({Url = API_URL, Method = "GET"})
+    if not res then
+        return
+    end
+    
+    local ok, data = pcall(function()
+        return HttpService:JSONDecode(res.Body)
+    end)
+    
+    if not ok or type(data) ~= "table" then
+        return
+    end
+    
+    currentJobId = game.JobId or "Offline"
+    
+    local playersWithSameJob = {}
+    local allPlayers = {}
+    
+    for key, playerData in pairs(data) do
+        if type(playerData) == "table" and playerData.username and playerData.userId and playerData.jobId then
+            table.insert(allPlayers, playerData)
+            if playerData.jobId == currentJobId then
+                table.insert(playersWithSameJob, playerData)
+            end
+        end
+    end
+    
+    for _, container in ipairs(PlayerListFrame:GetChildren()) do
+        if container:IsA("Frame") and container ~= UIList and container ~= UIPadding then
+            container:Destroy()
+        end
+    end
+    
+    if #playersWithSameJob > 0 then
+        local sameJobTitle = Instance.new("TextLabel")
+        sameJobTitle.Size = UDim2.new(1, 0, 0, 30)
+        sameJobTitle.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        sameJobTitle.Text = "✨ AYNI JOB ID'YE SAHİP OYUNCULAR ✨"
+        sameJobTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
+        sameJobTitle.Font = Enum.Font.GothamBold
+        sameJobTitle.TextSize = 14
+        sameJobTitle.TextWrapped = true
+        sameJobTitle.Parent = PlayerListFrame
+        createUICorner(sameJobTitle, 6)
+        
+        for _, playerData in ipairs(playersWithSameJob) do
+            local card = createPlayerCard(playerData, currentJobId)
+            card.Parent = PlayerListFrame
+        end
+    end
+    
+    local otherTitle = Instance.new("TextLabel")
+    otherTitle.Size = UDim2.new(1, 0, 0, 30)
+    otherTitle.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    otherTitle.Text = "👥 DİĞER OYUNCULAR"
+    otherTitle.TextColor3 = Color3.fromRGB(180, 180, 180)
+    otherTitle.Font = Enum.Font.GothamBold
+    otherTitle.TextSize = 14
+    otherTitle.TextWrapped = true
+    otherTitle.Parent = PlayerListFrame
+    createUICorner(otherTitle, 6)
+    
+    for _, playerData in ipairs(allPlayers) do
+        if playerData.jobId ~= currentJobId then
+            local card = createPlayerCard(playerData, currentJobId)
+            card.Parent = PlayerListFrame
+        end
+    end
+    
+    task.defer(function()
+        PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y)
+    end)
+end
+
+RefreshButton.MouseButton1Click:Connect(function()
+    updatePlayerList()
+    notify("Liste yenilendi!")
+end)
+
+MinimizeButton.MouseButton1Click:Connect(function()
+    Frame.Visible = false
+    local MinimizedIcon = createProfileImage(player.UserId, UDim2.new(0, 50, 0, 50))
+    MinimizedIcon.Position = UDim2.new(0, 20, 1, -70)
+    MinimizedIcon.Parent = ScreenGui
+    createUICorner(MinimizedIcon, 12)
+    MinimizedIcon.MouseButton1Click:Connect(function()
+        MinimizedIcon:Destroy()
+        Frame.Visible = true
+        updatePlayerList()
+    end)
+end)
+
+sendPlayerData()
+updatePlayerList()
+
+task.spawn(function()
+    while true do
+        task.wait(5)
+        sendPlayerData()
+        updatePlayerList()
+    end
+end)
+
+game:GetService("Players").PlayerRemoving:Connect(function()
+    updatePlayerList()
+end)
