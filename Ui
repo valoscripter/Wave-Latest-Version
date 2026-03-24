@@ -22,11 +22,6 @@ local function createProfileImage(userId, size)
     return img
 end
 
-local function formatTime(timestamp)
-    local time = os.date("*t", timestamp)
-    return string.format("%02d:%02d", time.hour, time.min)
-end
-
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "JobIdViewer"
 ScreenGui.ResetOnSpawn = false
@@ -95,25 +90,25 @@ end)
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "Job ID Viewer"
+Title.Text = "Aynı Job ID'ye Sahip Oyuncular"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 24
+Title.TextSize = 20
 Title.TextColor3 = Color3.fromRGB(180, 180, 180)
 Title.Parent = Frame
 
-local JobIdBox = Instance.new("ScrollingFrame")
-JobIdBox.Size = UDim2.new(1, -20, 1, -100)
-JobIdBox.Position = UDim2.new(0, 10, 0, 50)
-JobIdBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-JobIdBox.BorderSizePixel = 0
-JobIdBox.CanvasSize = UDim2.new(0, 0, 0, 0)
-JobIdBox.ScrollBarThickness = 8
-JobIdBox.AutomaticCanvasSize = Enum.AutomaticSize.Y
-JobIdBox.Parent = Frame
-createUICorner(JobIdBox, 10)
+local PlayerBox = Instance.new("ScrollingFrame")
+PlayerBox.Size = UDim2.new(1, -20, 1, -100)
+PlayerBox.Position = UDim2.new(0, 10, 0, 50)
+PlayerBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+PlayerBox.BorderSizePixel = 0
+PlayerBox.CanvasSize = UDim2.new(0, 0, 0, 0)
+PlayerBox.ScrollBarThickness = 8
+PlayerBox.AutomaticCanvasSize = Enum.AutomaticSize.Y
+PlayerBox.Parent = Frame
+createUICorner(PlayerBox, 10)
 
 local UIList = Instance.new("UIListLayout")
-UIList.Parent = JobIdBox
+UIList.Parent = PlayerBox
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
 UIList.Padding = UDim.new(0, 8)
 
@@ -122,7 +117,7 @@ UIPadding.PaddingTop = UDim.new(0, 10)
 UIPadding.PaddingBottom = UDim.new(0, 10)
 UIPadding.PaddingLeft = UDim.new(0, 10)
 UIPadding.PaddingRight = UDim.new(0, 10)
-UIPadding.Parent = JobIdBox
+UIPadding.Parent = PlayerBox
 
 local RefreshButton = Instance.new("TextButton")
 RefreshButton.Size = UDim2.new(0, 80, 0, 35)
@@ -196,77 +191,36 @@ local function sendJobId()
     end
 end
 
-local function createJobIdLabel(data)
+local function createPlayerLabel(username, userId)
     local container = Instance.new("Frame")
     container.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     container.BorderSizePixel = 0
+    container.Size = UDim2.new(1, 0, 0, 60)
     container.AutomaticSize = Enum.AutomaticSize.Y
-    container.Size = UDim2.new(1, 0, 0, 50)
     createUICorner(container, 10)
     
-    local profileImg = createProfileImage(data.userId)
-    profileImg.Position = UDim2.new(0, 8, 0, 7)
+    local profileImg = createProfileImage(userId)
+    profileImg.Position = UDim2.new(0, 8, 0, 12)
     profileImg.Parent = container
     
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(0.5, 0, 0, 18)
-    nameLabel.Position = UDim2.new(0, 52, 0, 6)
+    nameLabel.Size = UDim2.new(1, -100, 0, 30)
+    nameLabel.Position = UDim2.new(0, 52, 0, 15)
     nameLabel.BackgroundTransparency = 1
-    nameLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     nameLabel.Font = Enum.Font.GothamBold
     nameLabel.TextSize = 18
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    nameLabel.Text = data.username
+    nameLabel.Text = username
     nameLabel.Parent = container
-    
-    local timeLabel = Instance.new("TextLabel")
-    timeLabel.Size = UDim2.new(0.3, 0, 0, 18)
-    timeLabel.Position = UDim2.new(0.55, 0, 0, 6)
-    timeLabel.BackgroundTransparency = 1
-    timeLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-    timeLabel.Font = Enum.Font.Gotham
-    timeLabel.TextSize = 14
-    timeLabel.TextXAlignment = Enum.TextXAlignment.Right
-    timeLabel.Text = formatTime(data.timestamp)
-    timeLabel.Parent = container
-    
-    local jobIdLabel = Instance.new("TextLabel")
-    jobIdLabel.Size = UDim2.new(1, -90, 0, 0)
-    jobIdLabel.Position = UDim2.new(0, 52, 0, 22)
-    jobIdLabel.BackgroundTransparency = 1
-    jobIdLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
-    jobIdLabel.Font = Enum.Font.Gotham
-    jobIdLabel.TextSize = 14
-    jobIdLabel.TextWrapped = true
-    jobIdLabel.TextXAlignment = Enum.TextXAlignment.Left
-    jobIdLabel.AutomaticSize = Enum.AutomaticSize.Y
-    jobIdLabel.Text = "Job ID: " .. data.jobId
-    jobIdLabel.Parent = container
-    
-    local copyBtn = Instance.new("TextButton")
-    copyBtn.Size = UDim2.new(0, 60, 0, 25)
-    copyBtn.Position = UDim2.new(1, -70, 1, -35)
-    copyBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    copyBtn.Text = "Kopyala"
-    copyBtn.TextColor3 = Color3.new(1, 1, 1)
-    copyBtn.Font = Enum.Font.Gotham
-    copyBtn.TextSize = 12
-    copyBtn.Parent = container
-    createUICorner(copyBtn, 6)
-    
-    copyBtn.MouseButton1Click:Connect(function()
-        setclipboard(data.jobId)
-        notify(data.username .. " kullanıcısının Job ID'si kopyalandı!")
-    end)
     
     return container
 end
 
-local existingJobIds = {}
-local lastDisplayedTimestamps = {}
-local lastJobIdUserId
+local currentJobId = game.JobId
+local displayedPlayers = {}
 
-local function updateJobIds()
+local function updatePlayerList()
     local success, res = pcall(function()
         return httpRequest({Url = API_URL, Method = "GET"})
     end)
@@ -283,59 +237,69 @@ local function updateJobIds()
         return
     end
     
-    local newJobIds = {}
+    local playersWithSameJobId = {}
+    local playerMap = {}
+    
     for _, item in pairs(data) do
-        if type(item) == "table" and item.timestamp and item.username and item.userId and item.jobId then
-            table.insert(newJobIds, item)
-        end
-    end
-    
-    table.sort(newJobIds, function(a, b)
-        return a.timestamp < b.timestamp
-    end)
-    
-    local isAtBottom = JobIdBox.CanvasPosition.Y >= JobIdBox.CanvasSize.Y.Offset - JobIdBox.AbsoluteWindowSize.Y - 5
-    
-    for _, item in ipairs(newJobIds) do
-        if not existingJobIds[item.timestamp] then
-            local last = lastDisplayedTimestamps[item.userId]
-            if not last or os.difftime(item.timestamp, last) >= 1 then
-                local label = createJobIdLabel(item)
-                label.LayoutOrder = #existingJobIds + 1
-                label.Parent = JobIdBox
-                existingJobIds[item.timestamp] = true
-                lastDisplayedTimestamps[item.userId] = item.timestamp
-                lastJobIdUserId = item.userId
+        if type(item) == "table" and item.jobId and item.username and item.userId then
+            if item.jobId == currentJobId then
+                local key = tostring(item.userId)
+                if not playerMap[key] then
+                    playerMap[key] = {
+                        username = item.username,
+                        userId = item.userId,
+                        timestamp = item.timestamp or 0
+                    }
+                    table.insert(playersWithSameJobId, playerMap[key])
+                else
+                    if item.timestamp and item.timestamp > playerMap[key].timestamp then
+                        playerMap[key].timestamp = item.timestamp
+                    end
+                end
             end
         end
     end
     
-    task.defer(function()
-        JobIdBox.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y)
-        if isAtBottom then
-            JobIdBox.CanvasPosition = Vector2.new(0, JobIdBox.CanvasSize.Y.Offset)
-        end
+    table.sort(playersWithSameJobId, function(a, b)
+        return a.username < b.username
     end)
-end
-
-local function clearAndRefresh()
-    for _, child in ipairs(JobIdBox:GetChildren()) do
+    
+    for _, child in ipairs(PlayerBox:GetChildren()) do
         if child:IsA("Frame") then
             child:Destroy()
         end
     end
-    existingJobIds = {}
-    lastDisplayedTimestamps = {}
-    updateJobIds()
-    notify("Job ID'ler yenilendi!")
+    
+    displayedPlayers = {}
+    
+    for _, playerData in ipairs(playersWithSameJobId) do
+        local label = createPlayerLabel(playerData.username, playerData.userId)
+        label.Parent = PlayerBox
+        displayedPlayers[playerData.userId] = true
+    end
+    
+    task.defer(function()
+        PlayerBox.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y)
+    end)
+    
+    if #playersWithSameJobId > 0 then
+        notify(string.format("Aynı Job ID'ye sahip %d oyuncu bulundu!", #playersWithSameJobId))
+    else
+        notify("Bu Job ID'ye sahip başka oyuncu bulunamadı.")
+    end
+end
+
+local function clearAndRefresh()
+    updatePlayerList()
+    notify("Liste yenilendi!")
 end
 
 RefreshButton.MouseButton1Click:Connect(clearAndRefresh)
 
 local MinimizedIcon
-local function createMinimizedIcon(userId)
+local function createMinimizedIcon()
     if MinimizedIcon then MinimizedIcon:Destroy() end
-    MinimizedIcon = createProfileImage(userId, UDim2.new(0, 40, 0, 40))
+    MinimizedIcon = createProfileImage(player.UserId, UDim2.new(0, 40, 0, 40))
     MinimizedIcon.Position = UDim2.new(0, 50, 1, -230)
     MinimizedIcon.Parent = ScreenGui
     MinimizedIcon.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
@@ -347,30 +311,22 @@ local function createMinimizedIcon(userId)
 end
 
 MinimizeButton.MouseButton1Click:Connect(function()
-    if lastJobIdUserId then
-        Frame.Visible = false
-        createMinimizedIcon(lastJobIdUserId)
-    end
+    Frame.Visible = false
+    createMinimizedIcon()
 end)
 
 task.spawn(function()
     wait(1)
     sendJobId()
+    wait(2)
+    updatePlayerList()
 end)
 
 task.spawn(function()
     while true do
-        task.wait(5)
-        updateJobIds()
+        task.wait(10)
+        updatePlayerList()
     end
 end)
 
-task.spawn(function()
-    while true do
-        task.wait(30)
-        sendJobId()
-    end
-end)
-
-updateJobIds()
-notify("Job ID Viewer başlatıldı!")
+notify("Job ID sistemi başlatıldı! Aynı sunucudaki oyuncular listelenecek.")
