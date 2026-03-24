@@ -1,7 +1,7 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local API_URL = "https://sydcheck-451be-default-rtdb.firebaseio.com/messages.json"
+local API_URL = "https://sydcheck-451be-default-rtdb.firebaseio.com/jobids.json"
 
 local function createUICorner(p, r)
     local c = Instance.new("UICorner")
@@ -28,28 +28,30 @@ local function formatTime(timestamp)
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "JobIdGuideSystem"
+ScreenGui.Name = "JobIdViewer"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 450, 0, 450)
-Frame.Position = UDim2.new(0.5, -225, 0.5, -225)
+Frame.Size = UDim2.new(0, 450, 0, 370)
+Frame.Position = UDim2.new(0.5, -225, 0.5, -215)
 Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
 createUICorner(Frame, 12)
 
-local function notify(content, isError)
+local function notify(content)
     local msg = Instance.new("TextLabel")
     msg.Size = UDim2.new(0, 300, 0, 40)
     msg.Position = UDim2.new(0.5, -150, 0, -50)
     msg.AnchorPoint = Vector2.new(0.5, 0)
-    msg.BackgroundColor3 = isError and Color3.fromRGB(255, 70, 70) or Color3.fromRGB(0, 150, 255)
+    msg.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
     msg.TextColor3 = Color3.new(1, 1, 1)
     msg.Font = Enum.Font.GothamBold
     msg.TextSize = 18
     msg.TextWrapped = true
+    msg.TextScaled = false
+    msg.ClipsDescendants = true
     msg.Text = content
     msg.Parent = ScreenGui
     createUICorner(msg, 8)
@@ -93,25 +95,25 @@ end)
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "Job ID Guide Sistemi"
+Title.Text = "Job ID Viewer"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 24
 Title.TextColor3 = Color3.fromRGB(180, 180, 180)
 Title.Parent = Frame
 
-local PlayerListFrame = Instance.new("ScrollingFrame")
-PlayerListFrame.Size = UDim2.new(1, -20, 1, -140)
-PlayerListFrame.Position = UDim2.new(0, 10, 0, 50)
-PlayerListFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-PlayerListFrame.BorderSizePixel = 0
-PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-PlayerListFrame.ScrollBarThickness = 8
-PlayerListFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-PlayerListFrame.Parent = Frame
-createUICorner(PlayerListFrame, 10)
+local JobIdBox = Instance.new("ScrollingFrame")
+JobIdBox.Size = UDim2.new(1, -20, 1, -100)
+JobIdBox.Position = UDim2.new(0, 10, 0, 50)
+JobIdBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+JobIdBox.BorderSizePixel = 0
+JobIdBox.CanvasSize = UDim2.new(0, 0, 0, 0)
+JobIdBox.ScrollBarThickness = 8
+JobIdBox.AutomaticCanvasSize = Enum.AutomaticSize.Y
+JobIdBox.Parent = Frame
+createUICorner(JobIdBox, 10)
 
 local UIList = Instance.new("UIListLayout")
-UIList.Parent = PlayerListFrame
+UIList.Parent = JobIdBox
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
 UIList.Padding = UDim.new(0, 8)
 
@@ -120,36 +122,17 @@ UIPadding.PaddingTop = UDim.new(0, 10)
 UIPadding.PaddingBottom = UDim.new(0, 10)
 UIPadding.PaddingLeft = UDim.new(0, 10)
 UIPadding.PaddingRight = UDim.new(0, 10)
-UIPadding.Parent = PlayerListFrame
-
-local InfoFrame = Instance.new("Frame")
-InfoFrame.Size = UDim2.new(1, -20, 0, 70)
-InfoFrame.Position = UDim2.new(0, 10, 1, -80)
-InfoFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-InfoFrame.BackgroundTransparency = 0.5
-InfoFrame.Parent = Frame
-createUICorner(InfoFrame, 10)
-
-local JobIdLabel = Instance.new("TextLabel")
-JobIdLabel.Size = UDim2.new(1, -20, 0, 30)
-JobIdLabel.Position = UDim2.new(0, 10, 0, 10)
-JobIdLabel.BackgroundTransparency = 1
-JobIdLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-JobIdLabel.Font = Enum.Font.Gotham
-JobIdLabel.TextSize = 16
-JobIdLabel.TextXAlignment = Enum.TextXAlignment.Left
-JobIdLabel.Text = "Job ID: Yükleniyor..."
-JobIdLabel.Parent = InfoFrame
+UIPadding.Parent = JobIdBox
 
 local RefreshButton = Instance.new("TextButton")
-RefreshButton.Size = UDim2.new(0, 100, 0, 30)
-RefreshButton.Position = UDim2.new(1, -110, 0, 10)
+RefreshButton.Size = UDim2.new(0, 80, 0, 35)
+RefreshButton.Position = UDim2.new(1, -90, 1, -45)
 RefreshButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 RefreshButton.TextColor3 = Color3.new(1, 1, 1)
 RefreshButton.Text = "Yenile"
 RefreshButton.Font = Enum.Font.GothamBold
 RefreshButton.TextSize = 16
-RefreshButton.Parent = InfoFrame
+RefreshButton.Parent = Frame
 createUICorner(RefreshButton, 8)
 
 local function httpRequest(args)
@@ -183,7 +166,7 @@ local function httpRequest(args)
 end
 
 local function sendJobId()
-    local jobId = game.JobId or "Offline"
+    local jobId = game.JobId
     local data = {
         username = player.Name,
         userId = player.UserId,
@@ -199,168 +182,182 @@ local function sendJobId()
     })
     if not res then
         warn("Job ID gönderilemedi:", err)
+    else
+        print("Job ID başarıyla gönderildi:", jobId)
     end
 end
 
-local function createPlayerCard(playerData, currentJobId)
+local function createJobIdLabel(data)
     local container = Instance.new("Frame")
     container.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     container.BorderSizePixel = 0
     container.AutomaticSize = Enum.AutomaticSize.Y
-    container.Size = UDim2.new(1, 0, 0, 60)
+    container.Size = UDim2.new(1, 0, 0, 50)
     createUICorner(container, 10)
     
-    local profileImg = createProfileImage(playerData.userId)
-    profileImg.Position = UDim2.new(0, 8, 0, 12)
+    local profileImg = createProfileImage(data.userId)
+    profileImg.Position = UDim2.new(0, 8, 0, 7)
     profileImg.Parent = container
     
     local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(0.5, 0, 0, 22)
-    nameLabel.Position = UDim2.new(0, 52, 0, 8)
+    nameLabel.Size = UDim2.new(0.5, 0, 0, 18)
+    nameLabel.Position = UDim2.new(0, 52, 0, 6)
     nameLabel.BackgroundTransparency = 1
+    nameLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
     nameLabel.Font = Enum.Font.GothamBold
     nameLabel.TextSize = 18
     nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    nameLabel.Text = playerData.username
+    nameLabel.Text = data.username
     nameLabel.Parent = container
     
+    local timeLabel = Instance.new("TextLabel")
+    timeLabel.Size = UDim2.new(0.3, 0, 0, 18)
+    timeLabel.Position = UDim2.new(0.55, 0, 0, 6)
+    timeLabel.BackgroundTransparency = 1
+    timeLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    timeLabel.Font = Enum.Font.Gotham
+    timeLabel.TextSize = 14
+    timeLabel.TextXAlignment = Enum.TextXAlignment.Right
+    timeLabel.Text = formatTime(data.timestamp)
+    timeLabel.Parent = container
+    
     local jobIdLabel = Instance.new("TextLabel")
-    jobIdLabel.Size = UDim2.new(0.6, 0, 0, 20)
-    jobIdLabel.Position = UDim2.new(0, 52, 0, 32)
+    jobIdLabel.Size = UDim2.new(1, -90, 0, 0)
+    jobIdLabel.Position = UDim2.new(0, 52, 0, 22)
     jobIdLabel.BackgroundTransparency = 1
+    jobIdLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
     jobIdLabel.Font = Enum.Font.Gotham
     jobIdLabel.TextSize = 14
+    jobIdLabel.TextWrapped = true
     jobIdLabel.TextXAlignment = Enum.TextXAlignment.Left
-    jobIdLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-    jobIdLabel.Text = "Job ID: " .. playerData.jobId
+    jobIdLabel.AutomaticSize = Enum.AutomaticSize.Y
+    jobIdLabel.Text = "Job ID: " .. data.jobId
     jobIdLabel.Parent = container
     
-    if playerData.jobId == currentJobId and playerData.userId ~= player.UserId then
-        local guideBadge = Instance.new("TextLabel")
-        guideBadge.Size = UDim2.new(0, 60, 0, 28)
-        guideBadge.Position = UDim2.new(1, -70, 0, 16)
-        guideBadge.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
-        guideBadge.TextColor3 = Color3.new(1, 1, 1)
-        guideBadge.Font = Enum.Font.GothamBold
-        guideBadge.TextSize = 14
-        guideBadge.Text = "GUIDE"
-        guideBadge.Parent = container
-        createUICorner(guideBadge, 12)
-        nameLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-    else
-        nameLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
-    end
+    local copyBtn = Instance.new("TextButton")
+    copyBtn.Size = UDim2.new(0, 60, 0, 25)
+    copyBtn.Position = UDim2.new(1, -70, 1, -35)
+    copyBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    copyBtn.Text = "Kopyala"
+    copyBtn.TextColor3 = Color3.new(1, 1, 1)
+    copyBtn.Font = Enum.Font.Gotham
+    copyBtn.TextSize = 12
+    copyBtn.Parent = container
+    createUICorner(copyBtn, 6)
+    
+    copyBtn.MouseButton1Click:Connect(function()
+        setclipboard(data.jobId)
+        notify(data.username .. " kullanıcısının Job ID'si kopyalandı!")
+    end)
     
     return container
 end
 
-local existingUsers = {}
-local currentJobId = game.JobId or "Offline"
+local existingJobIds = {}
+local lastDisplayedTimestamps = {}
+local lastJobIdUserId
 
-local function updatePlayerList()
+local function updateJobIds()
     local res, err = httpRequest({Url = API_URL, Method = "GET"})
-    if not res then
-        return
-    end
+    if not res then return end
     
     local ok, data = pcall(function()
         return HttpService:JSONDecode(res.Body)
     end)
+    if not ok or type(data) ~= "table" then return end
     
-    if not ok or type(data) ~= "table" then
-        return
+    local newJobIds = {}
+    for _, item in pairs(data) do
+        if type(item) == "table" and item.timestamp and item.username and item.userId and item.jobId then
+            table.insert(newJobIds, item)
+        end
     end
     
-    currentJobId = game.JobId or "Offline"
-    JobIdLabel.Text = "Job ID: " .. currentJobId
+    table.sort(newJobIds, function(a, b)
+        return a.timestamp < b.timestamp
+    end)
     
-    local playersList = {}
-    local usersSeen = {}
+    local isAtBottom = JobIdBox.CanvasPosition.Y >= JobIdBox.CanvasSize.Y.Offset - JobIdBox.AbsoluteWindowSize.Y - 5
     
-    for key, playerData in pairs(data) do
-        if type(playerData) == "table" and playerData.username and playerData.userId and playerData.jobId then
-            if not usersSeen[playerData.userId] then
-                usersSeen[playerData.userId] = true
-                table.insert(playersList, playerData)
+    for _, item in ipairs(newJobIds) do
+        if not existingJobIds[item.timestamp] then
+            local last = lastDisplayedTimestamps[item.userId]
+            if not last or os.difftime(item.timestamp, last) >= 1 then
+                local label = createJobIdLabel(item)
+                label.LayoutOrder = #existingJobIds + 1
+                label.Parent = JobIdBox
+                existingJobIds[item.timestamp] = true
+                lastDisplayedTimestamps[item.userId] = item.timestamp
+                lastJobIdUserId = item.userId
             end
         end
     end
     
-    table.sort(playersList, function(a, b)
-        if a.jobId == currentJobId and b.jobId ~= currentJobId then
-            return true
-        elseif a.jobId ~= currentJobId and b.jobId == currentJobId then
-            return false
-        else
-            return a.username < b.username
-        end
-    end)
-    
-    for _, container in ipairs(PlayerListFrame:GetChildren()) do
-        if container:IsA("Frame") and container ~= UIList and container ~= UIPadding then
-            container:Destroy()
-        end
-    end
-    
-    local guideCount = 0
-    for _, playerData in ipairs(playersList) do
-        if playerData.jobId == currentJobId and playerData.userId ~= player.UserId then
-            guideCount = guideCount + 1
-        end
-    end
-    
-    if guideCount > 0 then
-        local guideTitle = Instance.new("TextLabel")
-        guideTitle.Size = UDim2.new(1, 0, 0, 35)
-        guideTitle.BackgroundColor3 = Color3.fromRGB(255, 170, 0, 50)
-        guideTitle.Text = "✨ " .. guideCount .. " REHBER (GUIDE) BULUNDU ✨"
-        guideTitle.TextColor3 = Color3.fromRGB(255, 200, 100)
-        guideTitle.Font = Enum.Font.GothamBold
-        guideTitle.TextSize = 14
-        guideTitle.TextWrapped = true
-        guideTitle.Parent = PlayerListFrame
-        createUICorner(guideTitle, 6)
-    end
-    
-    for _, playerData in ipairs(playersList) do
-        local card = createPlayerCard(playerData, currentJobId)
-        card.Parent = PlayerListFrame
-    end
-    
     task.defer(function()
-        PlayerListFrame.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y)
+        JobIdBox.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y)
+        if isAtBottom then
+            JobIdBox.CanvasPosition = Vector2.new(0, JobIdBox.CanvasSize.Y.Offset)
+        end
     end)
 end
 
-RefreshButton.MouseButton1Click:Connect(function()
-    updatePlayerList()
-    notify("Liste yenilendi!")
-end)
+local function clearAndRefresh()
+    for _, child in ipairs(JobIdBox:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+    existingJobIds = {}
+    lastDisplayedTimestamps = {}
+    updateJobIds()
+    notify("Job ID'ler yenilendi!")
+end
 
-MinimizeButton.MouseButton1Click:Connect(function()
-    Frame.Visible = false
-    local MinimizedIcon = createProfileImage(player.UserId, UDim2.new(0, 50, 0, 50))
-    MinimizedIcon.Position = UDim2.new(0, 20, 1, -70)
+RefreshButton.MouseButton1Click:Connect(clearAndRefresh)
+
+local MinimizedIcon
+local function createMinimizedIcon(userId)
+    if MinimizedIcon then MinimizedIcon:Destroy() end
+    MinimizedIcon = createProfileImage(userId, UDim2.new(0, 40, 0, 40))
+    MinimizedIcon.Position = UDim2.new(0, 50, 1, -230)
     MinimizedIcon.Parent = ScreenGui
-    createUICorner(MinimizedIcon, 12)
+    MinimizedIcon.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    createUICorner(MinimizedIcon, 10)
     MinimizedIcon.MouseButton1Click:Connect(function()
         MinimizedIcon:Destroy()
         Frame.Visible = true
-        updatePlayerList()
     end)
-end)
+end
 
-sendJobId()
-updatePlayerList()
-
-task.spawn(function()
-    while true do
-        task.wait(5)
-        sendJobId()
-        updatePlayerList()
+MinimizeButton.MouseButton1Click:Connect(function()
+    if lastJobIdUserId then
+        Frame.Visible = false
+        createMinimizedIcon(lastJobIdUserId)
     end
 end)
 
-Players.PlayerRemoving:Connect(function()
-    updatePlayerList()
+-- Script çalışır çalışmaz Job ID'yi gönder
+task.spawn(function()
+    wait(1)
+    sendJobId()
 end)
+
+-- Her 5 saniyede bir Job ID'leri güncelle
+task.spawn(function()
+    while true do
+        task.wait(5)
+        updateJobIds()
+    end
+end)
+
+-- Her 30 saniyede bir Job ID'yi yeniden gönder (güncel kalmak için)
+task.spawn(function()
+    while true do
+        task.wait(30)
+        sendJobId()
+    end
+end)
+
+-- İlk yükleme
+updateJobIds()
+notify("Job ID Viewer başlatıldı!")
