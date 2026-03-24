@@ -28,8 +28,8 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 450, 0, 370)
-Frame.Position = UDim2.new(0.5, -225, 0.5, -215)
+Frame.Size = UDim2.new(0, 400, 0, 300)
+Frame.Position = UDim2.new(0.5, -200, 0.5, -150)
 Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Frame.BorderSizePixel = 0
 Frame.Parent = ScreenGui
@@ -90,41 +90,47 @@ end)
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundTransparency = 1
-Title.Text = "Aynı Job ID'ye Sahip Oyuncular"
+Title.Text = "Aynı Sunucudaki Oyuncu"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 20
 Title.TextColor3 = Color3.fromRGB(180, 180, 180)
 Title.Parent = Frame
 
-local PlayerBox = Instance.new("ScrollingFrame")
-PlayerBox.Size = UDim2.new(1, -20, 1, -100)
-PlayerBox.Position = UDim2.new(0, 10, 0, 50)
-PlayerBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-PlayerBox.BorderSizePixel = 0
-PlayerBox.CanvasSize = UDim2.new(0, 0, 0, 0)
-PlayerBox.ScrollBarThickness = 8
-PlayerBox.AutomaticCanvasSize = Enum.AutomaticSize.Y
-PlayerBox.Parent = Frame
-createUICorner(PlayerBox, 10)
+local ResultFrame = Instance.new("Frame")
+ResultFrame.Size = UDim2.new(1, -40, 0, 80)
+ResultFrame.Position = UDim2.new(0, 20, 0, 70)
+ResultFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ResultFrame.BorderSizePixel = 0
+ResultFrame.Parent = Frame
+createUICorner(ResultFrame, 10)
 
-local UIList = Instance.new("UIListLayout")
-UIList.Parent = PlayerBox
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Padding = UDim.new(0, 8)
+local ResultText = Instance.new("TextLabel")
+ResultText.Size = UDim2.new(1, -20, 1, -20)
+ResultText.Position = UDim2.new(0, 10, 0, 10)
+ResultText.BackgroundTransparency = 1
+ResultText.TextColor3 = Color3.fromRGB(200, 200, 200)
+ResultText.Font = Enum.Font.Gotham
+ResultText.TextSize = 16
+ResultText.TextWrapped = true
+ResultText.Text = "Aranıyor..."
+ResultText.Parent = ResultFrame
 
-local UIPadding = Instance.new("UIPadding")
-UIPadding.PaddingTop = UDim.new(0, 10)
-UIPadding.PaddingBottom = UDim.new(0, 10)
-UIPadding.PaddingLeft = UDim.new(0, 10)
-UIPadding.PaddingRight = UDim.new(0, 10)
-UIPadding.Parent = PlayerBox
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -40, 0, 40)
+StatusLabel.Position = UDim2.new(0, 20, 1, -60)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextSize = 14
+StatusLabel.Text = "Bekleniyor..."
+StatusLabel.Parent = Frame
 
 local RefreshButton = Instance.new("TextButton")
-RefreshButton.Size = UDim2.new(0, 80, 0, 35)
-RefreshButton.Position = UDim2.new(1, -90, 1, -45)
+RefreshButton.Size = UDim2.new(0, 100, 0, 35)
+RefreshButton.Position = UDim2.new(0.5, -50, 1, -50)
 RefreshButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 RefreshButton.TextColor3 = Color3.new(1, 1, 1)
-RefreshButton.Text = "Yenile"
+RefreshButton.Text = "Tekrar Ara"
 RefreshButton.Font = Enum.Font.GothamBold
 RefreshButton.TextSize = 16
 RefreshButton.Parent = Frame
@@ -164,7 +170,7 @@ local function sendJobId()
     local jobId = game.JobId
     if not jobId or jobId == "" then
         notify("Job ID alınamadı!")
-        return
+        return false
     end
     
     local data = {
@@ -186,47 +192,21 @@ local function sendJobId()
     
     if not success or not res then
         warn("Job ID gönderilemedi:", res)
+        return false
     else
         print("Job ID başarıyla gönderildi:", jobId)
+        return true
     end
 end
 
-local function createPlayerLabel(username, userId)
-    local container = Instance.new("Frame")
-    container.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    container.BorderSizePixel = 0
-    container.Size = UDim2.new(1, 0, 0, 60)
-    container.AutomaticSize = Enum.AutomaticSize.Y
-    createUICorner(container, 10)
-    
-    local profileImg = createProfileImage(userId)
-    profileImg.Position = UDim2.new(0, 8, 0, 12)
-    profileImg.Parent = container
-    
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, -100, 0, 30)
-    nameLabel.Position = UDim2.new(0, 52, 0, 15)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextSize = 18
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    nameLabel.Text = username
-    nameLabel.Parent = container
-    
-    return container
-end
-
-local currentJobId = game.JobId
-local displayedPlayers = {}
-
-local function updatePlayerList()
+local function findSameJobIdPlayer()
     local success, res = pcall(function()
         return httpRequest({Url = API_URL, Method = "GET"})
     end)
     
     if not success or not res then
-        return
+        StatusLabel.Text = "Bağlantı hatası!"
+        return nil
     end
     
     local decodeSuccess, data = pcall(function()
@@ -234,67 +214,85 @@ local function updatePlayerList()
     end)
     
     if not decodeSuccess or type(data) ~= "table" then
-        return
+        StatusLabel.Text = "Veri alınamadı!"
+        return nil
     end
     
-    local playersWithSameJobId = {}
-    local playerMap = {}
+    local currentJobId = game.JobId
+    local foundPlayer = nil
+    local latestTimestamp = 0
     
     for _, item in pairs(data) do
         if type(item) == "table" and item.jobId and item.username and item.userId then
-            if item.jobId == currentJobId then
-                local key = tostring(item.userId)
-                if not playerMap[key] then
-                    playerMap[key] = {
+            if item.jobId == currentJobId and item.userId ~= player.UserId then
+                local timestamp = item.timestamp or 0
+                if timestamp > latestTimestamp then
+                    latestTimestamp = timestamp
+                    foundPlayer = {
                         username = item.username,
                         userId = item.userId,
-                        timestamp = item.timestamp or 0
+                        timestamp = timestamp
                     }
-                    table.insert(playersWithSameJobId, playerMap[key])
-                else
-                    if item.timestamp and item.timestamp > playerMap[key].timestamp then
-                        playerMap[key].timestamp = item.timestamp
-                    end
                 end
             end
         end
     end
     
-    table.sort(playersWithSameJobId, function(a, b)
-        return a.username < b.username
-    end)
+    return foundPlayer
+end
+
+local function updateDisplay()
+    StatusLabel.Text = "Aranıyor..."
+    ResultText.Text = "Aranıyor..."
     
-    for _, child in ipairs(PlayerBox:GetChildren()) do
-        if child:IsA("Frame") then
-            child:Destroy()
-        end
-    end
+    local found = findSameJobIdPlayer()
     
-    displayedPlayers = {}
-    
-    for _, playerData in ipairs(playersWithSameJobId) do
-        local label = createPlayerLabel(playerData.username, playerData.userId)
-        label.Parent = PlayerBox
-        displayedPlayers[playerData.userId] = true
-    end
-    
-    task.defer(function()
-        PlayerBox.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y)
-    end)
-    
-    if #playersWithSameJobId > 0 then
-        notify(string.format("Aynı Job ID'ye sahip %d oyuncu bulundu!", #playersWithSameJobId))
+    if found then
+        local profileImg = createProfileImage(found.userId, UDim2.new(0, 50, 0, 50))
+        profileImg.Position = UDim2.new(0, 15, 0, 15)
+        profileImg.Parent = ResultFrame
+        
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, -80, 0, 30)
+        nameLabel.Position = UDim2.new(0, 80, 0, 15)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextSize = 18
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.Text = found.username
+        nameLabel.Parent = ResultFrame
+        
+        local userIdLabel = Instance.new("TextLabel")
+        userIdLabel.Size = UDim2.new(1, -80, 0, 20)
+        userIdLabel.Position = UDim2.new(0, 80, 0, 45)
+        userIdLabel.BackgroundTransparency = 1
+        userIdLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+        userIdLabel.Font = Enum.Font.Gotham
+        userIdLabel.TextSize = 12
+        userIdLabel.TextXAlignment = Enum.TextXAlignment.Left
+        userIdLabel.Text = "User ID: " .. found.userId
+        userIdLabel.Parent = ResultFrame
+        
+        ResultText.Visible = false
+        
+        StatusLabel.Text = "Aynı sunucuda bir oyuncu bulundu!"
+        notify(found.username .. " adlı oyuncu sizinle aynı sunucuda!")
     else
-        notify("Bu Job ID'ye sahip başka oyuncu bulunamadı.")
+        for _, child in ipairs(ResultFrame:GetChildren()) do
+            if child ~= ResultText then
+                child:Destroy()
+            end
+        end
+        ResultText.Visible = true
+        ResultText.Text = "Aynı Job ID'ye sahip başka oyuncu bulunamadı."
+        StatusLabel.Text = "Bu sunucuda başka oyuncu yok."
     end
 end
 
-local function clearAndRefresh()
-    updatePlayerList()
-    notify("Liste yenilendi!")
-end
-
-RefreshButton.MouseButton1Click:Connect(clearAndRefresh)
+RefreshButton.MouseButton1Click:Connect(function()
+    updateDisplay()
+end)
 
 local MinimizedIcon
 local function createMinimizedIcon()
@@ -315,18 +313,15 @@ MinimizeButton.MouseButton1Click:Connect(function()
     createMinimizedIcon()
 end)
 
-task.spawn(function()
-    wait(1)
-    sendJobId()
-    wait(2)
-    updatePlayerList()
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(10)
-        updatePlayerList()
+local function main()
+    local success = sendJobId()
+    if success then
+        wait(2)
+        updateDisplay()
+    else
+        StatusLabel.Text = "Job ID gönderilemedi!"
+        ResultText.Text = "Bağlantı hatası, tekrar dene."
     end
-end)
+end
 
-notify("Job ID sistemi başlatıldı! Aynı sunucudaki oyuncular listelenecek.")
+task.spawn(main)
