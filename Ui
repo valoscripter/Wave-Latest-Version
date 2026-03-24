@@ -1,7 +1,7 @@
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local API_URL = "https://sydcheck-451be-default-rtdb.firebaseio.com/jobids.json"
+local API_URL = "https://sydearrzurna-default-rtdb.firebaseio.com/jobids.json"
 
 local function createUICorner(p, r)
     local c = Instance.new("UICorner")
@@ -167,21 +167,30 @@ end
 
 local function sendJobId()
     local jobId = game.JobId
+    if not jobId or jobId == "" then
+        notify("Job ID alınamadı!")
+        return
+    end
+    
     local data = {
         username = player.Name,
         userId = player.UserId,
         jobId = jobId,
         timestamp = os.time()
     }
+    
     local json = HttpService:JSONEncode(data)
-    local res, err = httpRequest({
-        Url = API_URL,
-        Method = "POST",
-        Headers = {["Content-Type"] = "application/json"},
-        Body = json
-    })
-    if not res then
-        warn("Job ID gönderilemedi:", err)
+    local success, res = pcall(function()
+        return httpRequest({
+            Url = API_URL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = json
+        })
+    end)
+    
+    if not success or not res then
+        warn("Job ID gönderilemedi:", res)
     else
         print("Job ID başarıyla gönderildi:", jobId)
     end
@@ -258,13 +267,21 @@ local lastDisplayedTimestamps = {}
 local lastJobIdUserId
 
 local function updateJobIds()
-    local res, err = httpRequest({Url = API_URL, Method = "GET"})
-    if not res then return end
+    local success, res = pcall(function()
+        return httpRequest({Url = API_URL, Method = "GET"})
+    end)
     
-    local ok, data = pcall(function()
+    if not success or not res then
+        return
+    end
+    
+    local decodeSuccess, data = pcall(function()
         return HttpService:JSONDecode(res.Body)
     end)
-    if not ok or type(data) ~= "table" then return end
+    
+    if not decodeSuccess or type(data) ~= "table" then
+        return
+    end
     
     local newJobIds = {}
     for _, item in pairs(data) do
@@ -336,13 +353,11 @@ MinimizeButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Script çalışır çalışmaz Job ID'yi gönder
 task.spawn(function()
     wait(1)
     sendJobId()
 end)
 
--- Her 5 saniyede bir Job ID'leri güncelle
 task.spawn(function()
     while true do
         task.wait(5)
@@ -350,7 +365,6 @@ task.spawn(function()
     end
 end)
 
--- Her 30 saniyede bir Job ID'yi yeniden gönder (güncel kalmak için)
 task.spawn(function()
     while true do
         task.wait(30)
@@ -358,6 +372,5 @@ task.spawn(function()
     end
 end)
 
--- İlk yükleme
 updateJobIds()
 notify("Job ID Viewer başlatıldı!")
