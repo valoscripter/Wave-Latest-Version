@@ -53,14 +53,16 @@ local function httpRequest(args)
 end
 
 local function SendToFirebase(playerName, onurValue)
+    local timestamp = os.time()
+    local key = playerName .. "_" .. timestamp
     local data = {
         playerName = playerName,
         onurValue = onurValue,
-        timestamp = os.time(),
+        timestamp = timestamp,
         placeId = game.PlaceId
     }
     local jsonData = HttpService:JSONEncode(data)
-    local url = HONOR_FIREBASE_URL .. "/onur_values/" .. playerName .. ".json"
+    local url = HONOR_FIREBASE_URL .. "/onur_values/" .. key .. ".json"
     local success, response = pcall(function()
         return httpRequest({
             Url = url,
