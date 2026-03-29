@@ -60,7 +60,9 @@ local function httpRequest(args)
 end
 
 -- ========================== HONOR POINTS FUNCTIONS ==========================
+-- Stores the honor value for a specific player (overwrites previous value)
 local function SendToFirebase(playerName, onurValue)
+    local encodedName = HttpService:UrlEncode(playerName)
     local data = {
         playerName = playerName,
         onurValue = onurValue,
@@ -68,7 +70,7 @@ local function SendToFirebase(playerName, onurValue)
         placeId = game.PlaceId
     }
     local jsonData = HttpService:JSONEncode(data)
-    local url = HONOR_FIREBASE_URL .. "/onur_values/last.json"
+    local url = HONOR_FIREBASE_URL .. "/onur_values/" .. encodedName .. ".json"
     
     local success, response = pcall(function()
         return httpRequest({
@@ -96,8 +98,10 @@ local function SendToFirebase(playerName, onurValue)
     return false
 end
 
-local function GetLatestFromFirebase()
-    local url = HONOR_FIREBASE_URL .. "/onur_values/last.json"
+-- Retrieves the last stored honor value for the given player
+local function GetPlayerHonorFromFirebase(playerName)
+    local encodedName = HttpService:UrlEncode(playerName)
+    local url = HONOR_FIREBASE_URL .. "/onur_values/" .. encodedName .. ".json"
     local success, response = pcall(function()
         return httpRequest({Url = url, Method = "GET"})
     end)
@@ -859,14 +863,14 @@ Players.PlayerAdded:Connect(updateServerCount)
 Players.PlayerRemoving:Connect(updateServerCount)
 updateServerCount()
 
--- Honor display updates
+-- Honor display updates – now fetches only for current player
 local function UpdateHonorDisplay()
-    local name, value = GetLatestFromFirebase()
+    local name, value, timestamp = GetPlayerHonorFromFirebase(Player.Name)
     if name and value then
         if type(value) == "number" then
-            HonorPointsText.Text = "Honor Points: " .. formatHonorValue(value) .. " (" .. name .. ")"
+            HonorPointsText.Text = "Honor Points: " .. formatHonorValue(value)
         else
-            HonorPointsText.Text = "Honor Points: " .. tostring(value) .. " (" .. name .. ")"
+            HonorPointsText.Text = "Honor Points: " .. tostring(value)
         end
         HonorPointsText.TextColor3 = Color3.fromRGB(255, 255, 255)
     else
