@@ -6,7 +6,6 @@ local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local StarterGui = game:GetService("StarterGui")
 
--- ========================== CONFIGURATION ==========================
 local Colors = {
     Primary = Color3.fromRGB(0, 140, 255),
     Secondary = Color3.fromRGB(64, 180, 255),
@@ -24,22 +23,16 @@ local Colors = {
     Warning = Color3.fromRGB(255, 190, 50)
 }
 
--- Firebase endpoints
 local HONOR_FIREBASE_URL = "https://onur-a7188-default-rtdb.firebaseio.com"
 local PRESENCE_FIREBASE_URL = "https://sydearrzurna-default-rtdb.firebaseio.com/positions.json"
+local HONOR_PLACE_ID = 3231515867
+local GUI_PLACE_ID = 6917372465
 
--- Place IDs
-local HONOR_PLACE_ID = 3231515867   -- where to collect honor points
-local GUI_PLACE_ID = 6917372465      -- where the GUI should appear
-
--- ========================== HTTP REQUEST HELPER ==========================
 local function httpRequest(args)
     local requestFunc = syn and syn.request or http and http.request or request
     if requestFunc then
         return requestFunc(args)
     end
-    
-    -- Fallback for environments without request
     if args.Method == "GET" then
         local ok, res = pcall(function()
             return HttpService:GetAsync(args.Url)
@@ -59,10 +52,7 @@ local function httpRequest(args)
     return nil
 end
 
--- ========================== HONOR POINTS FUNCTIONS ==========================
--- Stores the honor value for a specific player (overwrites previous value)
 local function SendToFirebase(playerName, onurValue)
-    local encodedName = HttpService:UrlEncode(playerName)
     local data = {
         playerName = playerName,
         onurValue = onurValue,
@@ -70,8 +60,7 @@ local function SendToFirebase(playerName, onurValue)
         placeId = game.PlaceId
     }
     local jsonData = HttpService:JSONEncode(data)
-    local url = HONOR_FIREBASE_URL .. "/onur_values/" .. encodedName .. ".json"
-    
+    local url = HONOR_FIREBASE_URL .. "/onur_values/" .. playerName .. ".json"
     local success, response = pcall(function()
         return httpRequest({
             Url = url,
@@ -80,7 +69,6 @@ local function SendToFirebase(playerName, onurValue)
             Body = jsonData
         })
     end)
-    
     if success and response then
         local status = response.StatusCode or response.status
         if status == 200 then
@@ -98,20 +86,30 @@ local function SendToFirebase(playerName, onurValue)
     return false
 end
 
--- Retrieves the last stored honor value for the given player
 local function GetPlayerHonorFromFirebase(playerName)
-    local encodedName = HttpService:UrlEncode(playerName)
-    local url = HONOR_FIREBASE_URL .. "/onur_values/" .. encodedName .. ".json"
+    local url = HONOR_FIREBASE_URL .. "/onur_values.json"
     local success, response = pcall(function()
         return httpRequest({Url = url, Method = "GET"})
     end)
-    
     if success and response and response.Body and response.Body ~= "" then
         local decodeSuccess, data = pcall(function()
             return HttpService:JSONDecode(response.Body)
         end)
         if decodeSuccess and data then
-            return data.playerName, data.onurValue, data.timestamp
+            local latest = nil
+            local latestTimestamp = 0
+            for _, entry in pairs(data) do
+                if entry.playerName == playerName then
+                    local ts = entry.timestamp or 0
+                    if ts > latestTimestamp then
+                        latestTimestamp = ts
+                        latest = entry
+                    end
+                end
+            end
+            if latest then
+                return latest.playerName, latest.onurValue, latest.timestamp
+            end
         end
     end
     return nil, nil, nil
@@ -160,7 +158,6 @@ local function FindOnurValue()
             return text
         end
     end
-    
     for _, obj in ipairs(game:GetDescendants()) do
         if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
             local text = obj.Text
@@ -174,7 +171,6 @@ local function FindOnurValue()
     return nil
 end
 
--- ========================== PRESENCE (SCRIPT USERS) FUNCTIONS ==========================
 local presenceKey = HttpService:GenerateGUID(false)
 local function sendPresence()
     local data = {
@@ -203,18 +199,15 @@ local function getScriptUsersInServer()
     if not success or not response or not response.Body then
         return {}
     end
-    
     local decodeSuccess, data = pcall(function()
         return HttpService:JSONDecode(response.Body)
     end)
     if not decodeSuccess or type(data) ~= "table" then
         return {}
     end
-    
     local currentJobId = game.JobId
     local currentTime = os.time()
     local scriptUsers = {}
-    
     for _, item in pairs(data) do
         if type(item) == "table" and item.userId and item.jobId and item.timestamp then
             if item.jobId == currentJobId and item.userId ~= Player.UserId then
@@ -227,7 +220,6 @@ local function getScriptUsersInServer()
     return scriptUsers
 end
 
--- ========================== GROUP INFO HELPER (for GUI) ==========================
 local function GetGroupInfo(groupId)
     local url = "https://groups.roblox.com/v1/groups/" .. groupId
     local success, response = pcall(function()
@@ -244,9 +236,7 @@ local function GetGroupInfo(groupId)
     return "Unknown", "Unknown"
 end
 
--- ========================== PLACE-SPECIFIC BEHAVIOR ==========================
 if game.PlaceId ~= GUI_PLACE_ID then
-    -- If we are in the honor collection place, collect and send honor points
     if game.PlaceId == HONOR_PLACE_ID then
         task.spawn(function()
             local foundValue = nil
@@ -267,10 +257,9 @@ if game.PlaceId ~= GUI_PLACE_ID then
             end
         end)
     end
-    return  -- Exit because we don't show GUI in other places
+    return
 end
 
--- ========================== GUI CREATION (only in GUI_PLACE_ID) ==========================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SydearrGUI"
 ScreenGui.ResetOnSpawn = false
@@ -399,7 +388,6 @@ ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ContentLayout.Padding = UDim.new(0, 12)
 ContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- INFO Panel
 local InfoPanel = Instance.new("Frame")
 InfoPanel.Size = UDim2.new(1, -20, 0, 70)
 InfoPanel.Position = UDim2.new(0, 10, 0, 0)
@@ -450,7 +438,6 @@ HonorPointsText.TextSize = 15
 HonorPointsText.TextXAlignment = Enum.TextXAlignment.Center
 HonorPointsText.Parent = InfoPanel
 
--- SYDEARR USERS Panel
 local UsersPanel = Instance.new("Frame")
 UsersPanel.Size = UDim2.new(1, -20, 0, 300)
 UsersPanel.Position = UDim2.new(0, 10, 0, 0)
@@ -516,7 +503,6 @@ UsersGrid.FillDirection = Enum.FillDirection.Horizontal
 UsersGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
 UsersGrid.FillDirectionMaxCells = 4
 
--- Game Info Panel
 local GameInfoFrame = Instance.new("Frame")
 GameInfoFrame.Size = UDim2.new(1, -20, 0, 0)
 GameInfoFrame.Position = UDim2.new(0, 10, 0, 0)
@@ -725,7 +711,6 @@ BottomSeparator.BackgroundTransparency = 0.6
 BottomSeparator.LayoutOrder = 16
 BottomSeparator.Parent = GameInfoFrame
 
--- ========================== GUI LOGIC ==========================
 local scriptUsers = {}
 
 local function createUserCard(user)
@@ -734,11 +719,9 @@ local function createUserCard(user)
     card.BackgroundColor3 = Colors.SurfaceLight
     card.BackgroundTransparency = 0.3
     card.Parent = UsersContent
-
     local cardCorner = Instance.new("UICorner")
     cardCorner.CornerRadius = UDim.new(0, 12)
     cardCorner.Parent = card
-
     local avatar = Instance.new("ImageLabel")
     avatar.Size = UDim2.new(0, 50, 0, 50)
     avatar.Position = UDim2.new(0.5, -25, 0, 10)
@@ -746,11 +729,9 @@ local function createUserCard(user)
     avatar.BackgroundTransparency = 0.5
     avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. user.UserId .. "&width=100&height=100&format=png"
     avatar.Parent = card
-
     local avatarCorner = Instance.new("UICorner")
     avatarCorner.CornerRadius = UDim.new(1, 0)
     avatarCorner.Parent = avatar
-
     local nameLabel = Instance.new("TextLabel")
     nameLabel.Size = UDim2.new(1, -10, 0, 30)
     nameLabel.Position = UDim2.new(0, 5, 0, 68)
@@ -762,8 +743,6 @@ local function createUserCard(user)
     nameLabel.TextWrapped = true
     nameLabel.TextScaled = true
     nameLabel.Parent = card
-
-    -- Check if user is using the script
     if scriptUsers[user.UserId] then
         local gradient = Instance.new("UIGradient")
         gradient.Color = ColorSequence.new({
@@ -775,7 +754,6 @@ local function createUserCard(user)
         gradient.Parent = nameLabel
         TweenService:Create(gradient, TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, -1), { Rotation = 225 }):Play()
     end
-
     local cardGradient = Instance.new("UIGradient")
     cardGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Colors.Primary),
@@ -804,13 +782,11 @@ local function refreshScriptUsers()
     scriptUsers = getScriptUsersInServer()
 end
 
--- Initial user list
 refreshScriptUsers()
 updateUserList()
 Players.PlayerAdded:Connect(updateUserList)
 Players.PlayerRemoving:Connect(updateUserList)
 
--- Periodically refresh script users and user list
 task.spawn(function()
     while true do
         task.wait(3)
@@ -819,7 +795,6 @@ task.spawn(function()
     end
 end)
 
--- Send presence every 5 seconds
 task.spawn(function()
     sendPresence()
     while true do
@@ -828,7 +803,6 @@ task.spawn(function()
     end
 end)
 
--- Cleanup presence on GUI close
 ScreenGui.Destroying:Connect(function()
     local url = "https://sydearrzurna-default-rtdb.firebaseio.com/positions/" .. presenceKey .. ".json"
     pcall(function()
@@ -836,7 +810,6 @@ ScreenGui.Destroying:Connect(function()
     end)
 end)
 
--- Group info
 task.spawn(function()
     if game.CreatorType == Enum.CreatorType.Group then
         local groupId = game.CreatorId
@@ -855,7 +828,6 @@ task.spawn(function()
     end
 end)
 
--- Player count updates
 local function updateServerCount()
     ServerCountLabel.Text = "<b>Player Count:</b> <u>" .. #Players:GetPlayers() .. "</u>"
 end
@@ -863,7 +835,6 @@ Players.PlayerAdded:Connect(updateServerCount)
 Players.PlayerRemoving:Connect(updateServerCount)
 updateServerCount()
 
--- Honor display updates – now fetches only for current player
 local function UpdateHonorDisplay()
     local name, value, timestamp = GetPlayerHonorFromFirebase(Player.Name)
     if name and value then
@@ -887,7 +858,6 @@ task.spawn(function()
     end
 end)
 
--- Drag to move GUI
 local dragToggle, dragStart, startPos
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -914,7 +884,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Animate entry
 MainFrame.Size = UDim2.new(0, 0, 0, 0)
 MainFrame.Position = UDim2.new(0.5, -235, 0.5, -250)
 TweenService:Create(MainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, 470, 0, 500) }):Play()
