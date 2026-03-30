@@ -847,16 +847,23 @@ if PlaceId == 6917372465 then
 	local STS_TAKIM = "Türk Silahlı Kuvvetleri"
 	local STS_ROT = CFrame.Angles(0, math.rad(-90), 0)
 	local sts_padlar = {
-		{pos = Vector3.new(-497.93, 7.84, 260.97), rotY = -90.40}, {pos = Vector3.new(-497.87, 7.84, 254.85), rotY = -90.40},
-		{pos = Vector3.new(-497.82, 7.84, 249.19), rotY = -89.60}, {pos = Vector3.new(-497.80, 7.84, 242.85), rotY = -90.00},
-		{pos = Vector3.new(-497.80, 7.84, 236.99), rotY = -90.00}, {pos = Vector3.new(-497.80, 7.84, 230.99), rotY = -90.00},
-		{pos = Vector3.new(-497.78, 7.84, 224.69), rotY = -88.40}, {pos = Vector3.new(-497.99, 7.83, 218.81), rotY = -90.80},
-		{pos = Vector3.new(-497.91, 7.84, 212.69), rotY = -90.00}, {pos = Vector3.new(-507.82, 7.84, 260.82), rotY = -90.80},
-		{pos = Vector3.new(-507.84, 7.84, 255.16), rotY = -89.20}, {pos = Vector3.new(-507.81, 7.84, 248.76), rotY = -90.00},
-		{pos = Vector3.new(-507.90, 7.84, 242.90), rotY = -90.00}, {pos = Vector3.new(-507.79, 7.84, 237.10), rotY = -89.60},
-		{pos = Vector3.new(-508.01, 7.83, 230.97), rotY = -89.60}, {pos = Vector3.new(-507.93, 7.84, 225.11), rotY = -90.80},
+		{pos = Vector3.new(-498, 8, 261), rotY = -90, cframe = CFrame.new(-498, 8, 261) * CFrame.Angles(0, math.rad(-90), 0), index = 1},
+		{pos = Vector3.new(-498, 8, 255), rotY = -90, cframe = CFrame.new(-498, 8, 255) * CFrame.Angles(0, math.rad(-90), 0), index = 2},
+		{pos = Vector3.new(-498, 8, 249), rotY = -90, cframe = CFrame.new(-498, 8, 249) * CFrame.Angles(0, math.rad(-90), 0), index = 3},
+		{pos = Vector3.new(-498, 8, 243), rotY = -90, cframe = CFrame.new(-498, 8, 243) * CFrame.Angles(0, math.rad(-90), 0), index = 4},
+		{pos = Vector3.new(-498, 8, 237), rotY = -90, cframe = CFrame.new(-498, 8, 237) * CFrame.Angles(0, math.rad(-90), 0), index = 5},
+		{pos = Vector3.new(-498, 8, 231), rotY = -90, cframe = CFrame.new(-498, 8, 231) * CFrame.Angles(0, math.rad(-90), 0), index = 6},
+		{pos = Vector3.new(-498, 8, 225), rotY = -90, cframe = CFrame.new(-498, 8, 225) * CFrame.Angles(0, math.rad(-90), 0), index = 7},
+		{pos = Vector3.new(-498, 8, 219), rotY = -90, cframe = CFrame.new(-498, 8, 219) * CFrame.Angles(0, math.rad(-90), 0), index = 8},
+		{pos = Vector3.new(-498, 8, 213), rotY = -90, cframe = CFrame.new(-498, 8, 213) * CFrame.Angles(0, math.rad(-90), 0), index = 9},
+		{pos = Vector3.new(-508, 8, 261), rotY = -90, cframe = CFrame.new(-508, 8, 261) * CFrame.Angles(0, math.rad(-90), 0), index = 10},
+		{pos = Vector3.new(-508, 8, 255), rotY = -90, cframe = CFrame.new(-508, 8, 255) * CFrame.Angles(0, math.rad(-90), 0), index = 11},
+		{pos = Vector3.new(-508, 8, 249), rotY = -90, cframe = CFrame.new(-508, 8, 249) * CFrame.Angles(0, math.rad(-90), 0), index = 12},
+		{pos = Vector3.new(-508, 8, 243), rotY = -90, cframe = CFrame.new(-508, 8, 243) * CFrame.Angles(0, math.rad(-90), 0), index = 13},
+		{pos = Vector3.new(-508, 8, 237), rotY = -90, cframe = CFrame.new(-508, 8, 237) * CFrame.Angles(0, math.rad(-90), 0), index = 14},
+		{pos = Vector3.new(-508, 8, 231), rotY = -90, cframe = CFrame.new(-508, 8, 231) * CFrame.Angles(0, math.rad(-90), 0), index = 15},
+		{pos = Vector3.new(-508, 8, 225), rotY = -90, cframe = CFrame.new(-508, 8, 225) * CFrame.Angles(0, math.rad(-90), 0), index = 16},
 	}
-	for i, p in ipairs(sts_padlar) do p.cframe = CFrame.new(p.pos) * CFrame.Angles(0, math.rad(p.rotY), 0); p.index = i end
 
 	local sts_curPad = nil
 	local sts_thread = nil
@@ -923,6 +930,27 @@ if PlaceId == 6917372465 then
 	local function sts_gitVeDur(pd)
 		if sts_moving then return end
 		sts_moving = true
+		
+		local function bakisiKapat()
+			if sts_bakAkt then
+				sts_bakDur()
+			end
+			if humanoid then
+				humanoid.AutoRotate = true
+			end
+		end
+		
+		local function bakisiAc()
+			if not sts_bakAkt and sts_aktif then
+				sts_bakBaslat()
+			end
+			if humanoid then
+				humanoid.AutoRotate = false
+			end
+		end
+		
+		bakisiKapat()
+		
 		local c = player.Character
 		if not c then sts_moving = false; return end
 		local h = c:FindFirstChild("HumanoidRootPart")
@@ -940,12 +968,14 @@ if PlaceId == 6917372465 then
 				hum:MoveTo(h.Position)
 				hum.WalkSpeed = 16
 				sts_moving = false
+				bakisiKapat()
 				return
 			end
 			if not sts_padBos(pd.pos) then
 				hum:MoveTo(h.Position)
 				hum.WalkSpeed = 16
 				sts_moving = false
+				bakisiKapat()
 				return
 			end
 			if (h.Position - tp).Magnitude < 1.2 then
@@ -962,6 +992,7 @@ if PlaceId == 6917372465 then
 			task.wait(0.05)
 			yumusakDonus(pd.rotY)
 			sendPosition(pd.index, true)
+			bakisiAc()
 		end
 		sts_moving = false
 	end
@@ -969,7 +1000,13 @@ if PlaceId == 6917372465 then
 	local function sts_checkDur()
 		sts_aktif = false
 		if sts_thread then pcall(function() task.cancel(sts_thread) end); sts_thread = nil end
-		pcall(function() if humanoid and root then humanoid:MoveTo(root.Position) end end)
+		sts_bakDur()
+		pcall(function() 
+			if humanoid and root then 
+				humanoid:MoveTo(root.Position)
+				humanoid.AutoRotate = true
+			end 
+		end)
 		sendPosition(0, true)
 	end
 
@@ -1030,7 +1067,6 @@ if PlaceId == 6917372465 then
 			task.wait(0.1)
 
 			sts_curPad = nil
-			sts_bakBaslat()
 			sts_checkBas()
 		else
 			sts_bakDur()
