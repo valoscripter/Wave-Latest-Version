@@ -1,0 +1,1586 @@
+local PlaceId = game.PlaceId
+
+local _sh_AllIDs = {}
+local _sh_foundAnything = ""
+local _sh_actualHour = os.date("!*t").hour
+
+local _sh_File = pcall(function()
+	_sh_AllIDs = game:GetService("HttpService"):JSONDecode(readfile("NotSameServers.json"))
+end)
+if not _sh_File then
+	table.insert(_sh_AllIDs, _sh_actualHour)
+	writefile("NotSameServers.json", game:GetService("HttpService"):JSONEncode(_sh_AllIDs))
+end
+
+local function _sh_TPReturner()
+	local Site
+	if _sh_foundAnything == "" then
+		Site = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+	else
+		Site = game.HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100&cursor=" .. _sh_foundAnything))
+	end
+	if Site.nextPageCursor and Site.nextPageCursor ~= "null" and Site.nextPageCursor ~= nil then
+		_sh_foundAnything = Site.nextPageCursor
+	end
+	local num = 0
+	for i, v in pairs(Site.data) do
+		local Possible = true
+		local ID = tostring(v.id)
+		if tonumber(v.maxPlayers) > tonumber(v.playing) then
+			for _, Existing in pairs(_sh_AllIDs) do
+				if num ~= 0 then
+					if ID == tostring(Existing) then
+						Possible = false
+					end
+				else
+					if tonumber(_sh_actualHour) ~= tonumber(Existing) then
+						pcall(function()
+							delfile("NotSameServers.json")
+							_sh_AllIDs = {}
+							table.insert(_sh_AllIDs, _sh_actualHour)
+						end)
+					end
+				end
+				num = num + 1
+			end
+			if Possible == true then
+				table.insert(_sh_AllIDs, ID)
+				task.wait()
+				pcall(function()
+					writefile("NotSameServers.json", game:GetService("HttpService"):JSONEncode(_sh_AllIDs))
+					task.wait()
+					game:GetService("TeleportService"):TeleportToPlaceInstance(PlaceId, ID, game.Players.LocalPlayer)
+				end)
+				task.wait(4)
+			end
+		end
+	end
+end
+
+local function serverhop()
+	while task.wait() do
+		pcall(function()
+			_sh_TPReturner()
+			if _sh_foundAnything ~= "" then
+				_sh_TPReturner()
+			end
+		end)
+	end
+end
+
+if PlaceId ~= 3231515867 and PlaceId ~= 6917372465 then
+	local TeleportService = game:GetService("TeleportService")
+	local Players = game:GetService("Players")
+	local player = Players.LocalPlayer
+
+	player.AncestryChanged:Connect(function()
+		pcall(function()
+			TeleportService:Teleport(3231515867, player)
+		end)
+	end)
+
+	pcall(function()
+		TeleportService:Teleport(3231515867, player)
+	end)
+
+	while true do task.wait(1) end
+end
+
+if PlaceId == 3231515867 then
+	local Players = game:GetService("Players")
+	local VirtualInputManager = game:GetService("VirtualInputManager")
+	local GuiService = game:GetService("GuiService")
+
+	local player = Players.LocalPlayer
+	local gui = player:WaitForChild("PlayerGui")
+	local duyurular = gui:WaitForChild("Duyurular")
+	local egitim = duyurular:WaitForChild("EgitimDuyuru")
+	local katilButton = egitim:WaitForChild("Katıl")
+
+	local function clickButton(button)
+		if not button or not button.Visible then return end
+		local inset = GuiService:GetGuiInset()
+		local absPos = button.AbsolutePosition
+		local absSize = button.AbsoluteSize
+		local centerX = absPos.X + absSize.X / 2
+		local centerY = absPos.Y + absSize.Y / 2 + inset.Y
+		VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+		task.wait(0.1)
+		VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+	end
+
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			if katilButton and katilButton.Visible then
+				clickButton(katilButton)
+			end
+		end
+	end)
+
+	local function orduSubaylariSayisi()
+		local sayi = 0
+		for _, p in ipairs(Players:GetPlayers()) do
+			local ok, takim = pcall(function() return p.Team end)
+			if ok and takim and takim.Name == "Ordu Subayları" then
+				sayi = sayi + 1
+			end
+		end
+		return sayi
+	end
+
+	local azKisiUyarisiVerildi = false
+
+	task.spawn(function()
+		task.wait(10)
+		while true do
+			task.wait(15)
+			local sayi = orduSubaylariSayisi()
+			if sayi == 0 then
+				task.spawn(serverhop)
+				return
+			elseif sayi <= 3 and not azKisiUyarisiVerildi then
+				azKisiUyarisiVerildi = true
+				task.spawn(function()
+					task.wait(120)
+					local yeniSayi = orduSubaylariSayisi()
+					if yeniSayi <= 3 then
+						task.spawn(serverhop)
+					else
+						azKisiUyarisiVerildi = false
+					end
+				end)
+			elseif sayi > 3 then
+				azKisiUyarisiVerildi = false
+			end
+		end
+	end)
+end
+
+if PlaceId == 6917372465 then
+	local HttpService = game:GetService("HttpService")
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local UserInputService = game:GetService("UserInputService")
+	local TextChatService = game:GetService("TextChatService")
+	local Workspace = game:GetService("Workspace")
+	local TweenService = game:GetService("TweenService")
+	local TeleportService = game:GetService("TeleportService")
+
+	task.spawn(function()
+		task.wait(480)
+		TeleportService:Teleport(3231515867, Players.LocalPlayer)
+	end)
+
+	local player = Players.LocalPlayer
+	local root = nil
+	local humanoid = nil
+
+	local API_URL = "https://sydearrzurna-default-rtdb.firebaseio.com/positions.json"
+	local STS_API_URL = "https://sydearrzurna-default-rtdb.firebaseio.com/sts_positions.json"
+
+	local dbCache = {
+		normal = {data = {}, time = 0},
+		sts = {data = {}, time = 0}
+	}
+	local DB_CACHE_SURE = 2
+
+	local playerCache = {data = nil, time = 0}
+	local PLAYER_CACHE_SURE = 3
+
+	local ScreenGui = Instance.new("ScreenGui")
+	ScreenGui.Name = "PlayerFinder"
+	ScreenGui.ResetOnSpawn = false
+	ScreenGui.Parent = player:WaitForChild("PlayerGui")
+	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+	local AvatarButton = Instance.new("ImageButton")
+	AvatarButton.Size = UDim2.new(0, 48, 0, 48)
+	AvatarButton.Position = UDim2.new(1, -58, 1, -58)
+	AvatarButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+	AvatarButton.BackgroundTransparency = 0
+	AvatarButton.BorderSizePixel = 0
+	AvatarButton.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+	AvatarButton.Parent = ScreenGui
+
+	local UICorner = Instance.new("UICorner")
+	UICorner.CornerRadius = UDim.new(1, 0)
+	UICorner.Parent = AvatarButton
+
+	local UIStroke = Instance.new("UIStroke")
+	UIStroke.Thickness = 1
+	UIStroke.Color = Color3.fromRGB(80, 80, 90)
+	UIStroke.Parent = AvatarButton
+
+	local function createProfileImage(userId)
+		return "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=100&height=100&format=png"
+	end
+
+	local function updateDisplay()
+		local found = findSameJobIdPlayer(sts_aktif)
+		if found then
+			AvatarButton.Image = createProfileImage(found.userId)
+		else
+			AvatarButton.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+		end
+	end
+
+	local function httpRequest(args)
+		if syn and syn.request then
+			return syn.request(args)
+		elseif http_request then
+			return http_request(args)
+		elseif request then
+			return request(args)
+		else
+			local ok, res
+			if args.Method == "POST" then
+				ok, res = pcall(function()
+					return HttpService:PostAsync(args.Url, args.Body, Enum.HttpContentType.ApplicationJson)
+				end)
+			elseif args.Method == "DELETE" then
+				ok, res = pcall(function()
+					return HttpService:RequestAsync(args)
+				end)
+			else
+				ok, res = pcall(function()
+					return HttpService:GetAsync(args.Url)
+				end)
+			end
+			if ok then
+				return {Body = res}
+			else
+				return nil, res
+			end
+		end
+	end
+
+	local function sendPosition(index, isSTS)
+		local url = isSTS and STS_API_URL or API_URL
+		local data = {
+			username = player.Name,
+			userId = player.UserId,
+			position = index,
+			jobId = game.JobId,
+			timestamp = os.time(),
+			isSTS = isSTS or false
+		}
+		local json = HttpService:JSONEncode(data)
+		local success, res = pcall(function()
+			return httpRequest({
+				Url = url,
+				Method = "POST",
+				Headers = {["Content-Type"] = "application/json"},
+				Body = json
+			})
+		end)
+		return success and res ~= nil
+	end
+
+	local function getOccupiedPositions(isSTS)
+		local cache = isSTS and dbCache.sts or dbCache.normal
+		local simdi = os.time()
+
+		if simdi - cache.time < DB_CACHE_SURE then
+			return cache.data
+		end
+
+		local url = isSTS and STS_API_URL or API_URL
+		local success, res = pcall(function()
+			return httpRequest({Url = url, Method = "GET"})
+		end)
+
+		if not success or not res then
+			return cache.data
+		end
+
+		local decodeSuccess, data = pcall(function()
+			return HttpService:JSONDecode(res.Body)
+		end)
+
+		if not decodeSuccess or type(data) ~= "table" then
+			return cache.data
+		end
+
+		local occupied = {}
+		local currentJobId = game.JobId
+		local currentTime = os.time()
+
+		for _, item in pairs(data) do
+			if type(item) == "table" and item.position and item.userId and item.jobId and item.timestamp then
+				if item.jobId == currentJobId and item.userId ~= player.UserId then
+					if currentTime - item.timestamp < 10 then
+						occupied[item.position] = item.username
+					end
+				end
+			end
+		end
+
+		cache.data = occupied
+		cache.time = simdi
+
+		return occupied
+	end
+
+	local function findSameJobIdPlayer(isSTS)
+		local simdi = os.time()
+		if simdi - playerCache.time < PLAYER_CACHE_SURE then
+			return playerCache.data
+		end
+
+		local url = isSTS and STS_API_URL or API_URL
+		local success, res = pcall(function()
+			return httpRequest({Url = url, Method = "GET"})
+		end)
+
+		if not success or not res then
+			return playerCache.data
+		end
+
+		local decodeSuccess, data = pcall(function()
+			return HttpService:JSONDecode(res.Body)
+		end)
+
+		if not decodeSuccess or type(data) ~= "table" then
+			return playerCache.data
+		end
+
+		local currentJobId = game.JobId
+		local foundPlayer = nil
+		local latestTimestamp = 0
+
+		for _, item in pairs(data) do
+			if type(item) == "table" and item.jobId and item.username and item.userId then
+				if item.jobId == currentJobId and item.userId ~= player.UserId then
+					if not isSTS and item.isSTS then
+					elseif isSTS and not item.isSTS then
+					else
+						local timestamp = item.timestamp or 0
+						if timestamp > latestTimestamp then
+							latestTimestamp = timestamp
+							foundPlayer = {
+								username = item.username,
+								userId = item.userId,
+								timestamp = timestamp
+							}
+						end
+					end
+				end
+			end
+		end
+
+		playerCache.data = foundPlayer
+		playerCache.time = simdi
+
+		return foundPlayer
+	end
+
+	local sts_aktif = false
+
+	local function karakterGuncelle(char)
+		if not char then return end
+		root = char:WaitForChild("HumanoidRootPart")
+		humanoid = char:WaitForChild("Humanoid")
+		currentPozisyonIndex = nil
+
+		if aciKorumaBaglanti then
+			aciKorumaBaglanti:Disconnect()
+			aciKorumaBaglanti = nil
+		end
+		sabitAciBelirlendi = false
+		sabitBakisAcisi = 180
+	end
+
+	repeat task.wait() until player.Character
+	karakterGuncelle(player.Character)
+	player.CharacterAdded:Connect(karakterGuncelle)
+
+	local function oyuncuTakimdaMi(p)
+		if not p or p == player then return false end
+		local basari, takim = pcall(function() return p.Team end)
+		return basari and takim and takim.Name == TAKIM_ADI
+	end
+
+	local function oyuncuSubayMi(p)
+		if not p then return false end
+		local basari, takim = pcall(function() return p.Team end)
+		if not basari or not takim then return false end
+		for _, subayTakimi in ipairs(SUBAT_TAKIMLARI) do
+			if takim.Name == subayTakimi then return true end
+		end
+		return false
+	end
+
+	local function pozisyonKorumaliMi(index)
+		for _, korumali in ipairs(KORUMALI_POZISYONLAR) do
+			if index == korumali then return true end
+		end
+		return false
+	end
+
+	local function pozisyonTriggerOlustur(index, pozisyonCF)
+		if pozisyonTriggers[index] and pozisyonTriggers[index].Parent then
+			pozisyonTriggers[index]:Destroy()
+		end
+		local trigger = Instance.new("Part")
+		trigger.Name = "PozisyonTrigger_" .. index
+		trigger.Size = Vector3.new(5, 1, 5)
+		trigger.CFrame = pozisyonCF * CFrame.new(0, 0, 0)
+		trigger.Anchored = true
+		trigger.CanCollide = false
+		trigger.Transparency = 1
+		trigger.Parent = Workspace
+		pozisyonTriggers[index] = trigger
+		return trigger
+	end
+
+	local TAKIM_ADI = "Türk Silahlı Kuvvetleri"
+	local KORUMALI_POZISYONLAR = {1, 2}
+	local SUBAT_TAKIMLARI = {"Ordu Subayları", "Denetmenler"}
+
+	local pozisyonlar = {
+		{ cframe = CFrame.new(-441.74, 7.84, 36.44), aci = 180 },
+		{ cframe = CFrame.new(-441.91, 7.84, 30.51), aci = 180 },
+		{ cframe = CFrame.new(-442.06, 7.84, 24.38), aci = 180 },
+		{ cframe = CFrame.new(-441.89, 7.84, 18.41), aci = 180 },
+		{ cframe = CFrame.new(-441.86, 7.84, 12.46), aci = 180 },
+		{ cframe = CFrame.new(-441.82, 7.84, 6.41), aci = 180 },
+		{ cframe = CFrame.new(-441.81, 7.83, 0.34), aci = 180 },
+		{ cframe = CFrame.new(-442.07, 7.84, -5.45), aci = 180 },
+		{ cframe = CFrame.new(-441.93, 7.84, -11.57), aci = 180 },
+	}
+
+	local TOPLAM_POZISYON = #pozisyonlar
+	local isMoving = false
+	local currentPozisyonIndex = nil
+	local otomatikKontrolAktif = false
+	local kontrolBaglanti = nil
+
+	local sonKontrol = 0
+	local KONTROL_ARALIGI = 0.1
+	local HEDEF_ULASIM_MESAFESI = 2.0
+	local POZISYON_YARI_CAP = 3.0
+
+	local sabitBakisAcisi = 180
+	local sabitAciBelirlendi = false
+	local aciKorumaBaglanti = nil
+
+	local pozisyonTriggers = {}
+
+	for i, pozisyon in ipairs(pozisyonlar) do
+		pozisyonTriggerOlustur(i, pozisyon.cframe)
+	end
+
+	local function pozisyonDoluMu(index, umursaSubay, isSTS)
+		local pozisyon = pozisyonlar[index]
+		if not pozisyon then return false, nil, false end
+		local pozisyonPos = pozisyon.cframe.Position
+		local trigger = pozisyonTriggers[index]
+
+		local occupiedFromDB = getOccupiedPositions(isSTS)
+		if occupiedFromDB[index] then
+			return true, occupiedFromDB[index], false
+		end
+
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+				local charPos = p.Character.HumanoidRootPart.Position
+				if math.abs(charPos.Y - pozisyonPos.Y) < 5 then
+					local yatayMesafe = (Vector3.new(charPos.X, 0, charPos.Z) - Vector3.new(pozisyonPos.X, 0, pozisyonPos.Z)).Magnitude
+					local pozisyondaMi = false
+
+					if trigger and trigger.Parent then
+						local triggerPos = trigger.Position
+						local size = trigger.Size / 2
+						if math.abs(charPos.X - triggerPos.X) <= size.X + 1 and
+						   math.abs(charPos.Y - triggerPos.Y) <= size.Y + 2 and
+						   math.abs(charPos.Z - triggerPos.Z) <= size.Z + 1 then
+							pozisyondaMi = true
+						end
+					end
+					if yatayMesafe < POZISYON_YARI_CAP then pozisyondaMi = true end
+
+					if pozisyondaMi then
+						local subay = oyuncuSubayMi(p)
+						if subay then return true, p.Name, true end
+						if oyuncuTakimdaMi(p) then return true, p.Name, false end
+					end
+				end
+			end
+		end
+		return false, nil, false
+	end
+
+	local function enUygunPozisyonuBul(isSTS)
+		if not root then return TOPLAM_POZISYON end
+
+		local occupied = getOccupiedPositions(isSTS)
+
+		for i = 1, TOPLAM_POZISYON do
+			local dolu, _, _ = pozisyonDoluMu(i, true, isSTS)
+			if not dolu and not occupied[i] then
+				return i
+			end
+		end
+		return nil
+	end
+
+	local function yumusakDonus(hedefAci)
+		if not root then return end
+		local baslangicAci = math.rad(root.Orientation.Y)
+		local hedefRadyan = math.rad(hedefAci)
+		local fark = math.atan2(math.sin(hedefRadyan - baslangicAci), math.cos(hedefRadyan - baslangicAci))
+		if math.abs(fark) < 0.01 then return end
+		local adimSayisi = 10
+		for i = 1, adimSayisi do
+			if not root then break end
+			local yeniAci = baslangicAci + (fark * i / adimSayisi)
+			root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, yeniAci, 0)
+			task.wait(0.008)
+		end
+		if root then root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, hedefRadyan, 0) end
+	end
+
+	local function aciKontrolveKoru()
+		if not root or not sabitAciBelirlendi or not sabitBakisAcisi then return end
+		if math.abs(root.Orientation.Y - sabitBakisAcisi) > 1 then
+			root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, math.rad(sabitBakisAcisi), 0)
+		end
+	end
+
+	local function aciKorumayiBaslat()
+		if aciKorumaBaglanti then aciKorumaBaglanti:Disconnect() end
+		aciKorumaBaglanti = RunService.Heartbeat:Connect(aciKontrolveKoru)
+	end
+
+	local function aciKorumayiDurdur()
+		if aciKorumaBaglanti then
+			aciKorumaBaglanti:Disconnect()
+			aciKorumaBaglanti = nil
+		end
+	end
+
+	local function sflKapat()
+		otomatikKontrolAktif = false
+		if humanoid then
+			humanoid:MoveTo(root and root.Position or Vector3.zero)
+			humanoid.WalkSpeed = 16
+			humanoid.AutoRotate = true
+		end
+		isMoving = false
+		currentPozisyonIndex = nil
+		if kontrolBaglanti then kontrolBaglanti:Disconnect(); kontrolBaglanti = nil end
+		aciKorumayiDurdur()
+		sabitAciBelirlendi = false
+	end
+
+	local function pozisyonDegistir(hedefIndex, isSTS)
+		if isMoving then return false end
+		if not root or not humanoid then return false end
+		if hedefIndex == currentPozisyonIndex then return false end
+
+		local hedefKayit = pozisyonlar[hedefIndex]
+		if not hedefKayit then return false end
+
+		local dolu, _, _ = pozisyonDoluMu(hedefIndex, true, isSTS)
+		if dolu then return false end
+
+		isMoving = true
+		local hedefPos = hedefKayit.cframe.Position
+
+		humanoid.AutoRotate = true
+		task.wait(0.05)
+		humanoid.WalkSpeed = 16
+		humanoid:MoveTo(hedefPos)
+
+		local ulasildi = false
+		local baglanti = humanoid.MoveToFinished:Connect(function(reached) if reached then ulasildi = true end end)
+		local baslangic = os.clock()
+
+		while not ulasildi and (os.clock() - baslangic) < 15 do
+			if not root or not humanoid then break end
+			local suAnDolu, isgalci = pozisyonDoluMu(hedefIndex, true, isSTS)
+			if suAnDolu and isgalci ~= player.Name then
+				humanoid:MoveTo(root.Position)
+				task.wait(0.05)
+				break
+			end
+			if (root.Position - hedefPos).Magnitude < HEDEF_ULASIM_MESAFESI then
+				humanoid.WalkSpeed = 8
+				ulasildi = true
+				break
+			end
+			task.wait(0.05)
+		end
+		baglanti:Disconnect()
+
+		if ulasildi and root and humanoid then
+			local sonDolu, sonOyuncu = pozisyonDoluMu(hedefIndex, true, isSTS)
+			if sonDolu and sonOyuncu ~= player.Name then
+				isMoving = false
+				task.wait(0.2)
+				local yeniHedef = enUygunPozisyonuBul(isSTS)
+				if yeniHedef then pozisyonDegistir(yeniHedef, isSTS) end
+				return false
+			end
+			humanoid:MoveTo(hedefPos)
+			task.wait(0.1)
+
+			yumusakDonus(hedefKayit.aci)
+			sabitBakisAcisi = hedefKayit.aci
+			sabitAciBelirlendi = true
+			humanoid.AutoRotate = false
+			aciKorumayiBaslat()
+
+			currentPozisyonIndex = hedefIndex
+			sendPosition(hedefIndex, isSTS)
+		end
+		isMoving = false
+		return ulasildi
+	end
+
+	local function otomatikKontrol(isSTS)
+		if not root or not humanoid or isMoving or not otomatikKontrolAktif then return end
+
+		if currentPozisyonIndex == nil then
+			local enBos = enUygunPozisyonuBul(isSTS)
+			if enBos then pozisyonDegistir(enBos, isSTS) end
+			return
+		end
+
+		local suAnDolu, isgalci = pozisyonDoluMu(currentPozisyonIndex, true, isSTS)
+		if suAnDolu and isgalci ~= player.Name then
+			local yeniHedef = enUygunPozisyonuBul(isSTS)
+			if yeniHedef and yeniHedef ~= currentPozisyonIndex then
+				pozisyonDegistir(yeniHedef, isSTS)
+			end
+			return
+		end
+
+		local dahaIyiPozisyon = enUygunPozisyonuBul(isSTS)
+		if dahaIyiPozisyon and dahaIyiPozisyon < currentPozisyonIndex then
+			pozisyonDegistir(dahaIyiPozisyon, isSTS)
+		end
+	end
+
+	local function sflAc()
+		if otomatikKontrolAktif then return end
+		otomatikKontrolAktif = true
+		currentPozisyonIndex = nil
+		if kontrolBaglanti then kontrolBaglanti:Disconnect() end
+		sonKontrol = 0
+
+		sabitAciBelirlendi = false
+		if humanoid then
+			humanoid.AutoRotate = true
+		end
+
+		kontrolBaglanti = RunService.Heartbeat:Connect(function()
+			if not otomatikKontrolAktif then return end
+			local simdi = tick()
+			if simdi - sonKontrol >= KONTROL_ARALIGI then
+				sonKontrol = simdi
+				otomatikKontrol(false)
+			end
+		end)
+	end
+
+	local TAKIP_MESAFESI = 5
+	local YAKIN_MESAFE = 1.5
+
+	local takipAktif = false
+	local komutan = nil
+	local takipBag = nil
+	local toolConnection = nil
+	local oncekiTool = nil
+
+	local function TakipInstanceleriAl(hrp)
+		local bv = hrp:FindFirstChild("TakipBV")
+		if not bv then
+			bv = Instance.new("BodyVelocity")
+			bv.Name = "TakipBV"
+			bv.MaxForce = Vector3.new(1e6, 0, 1e6)
+			bv.Velocity = Vector3.zero
+			bv.Parent = hrp
+		end
+		local bg = hrp:FindFirstChild("TakipBG")
+		if not bg then
+			bg = Instance.new("BodyGyro")
+			bg.Name = "TakipBG"
+			bg.MaxTorque = Vector3.new(0, 1e6, 0)
+			bg.P = 3000
+			bg.D = 300
+			bg.CFrame = hrp.CFrame
+			bg.Parent = hrp
+		end
+		return bv, bg
+	end
+
+	local function TakipInstanceleriTemizle(hrp)
+		if not hrp then return end
+		local bv = hrp:FindFirstChild("TakipBV")
+		local bg = hrp:FindFirstChild("TakipBG")
+		if bv then bv:Destroy() end
+		if bg then bg:Destroy() end
+	end
+
+	local function BenimToolum()
+		local char = player.Character
+		if not char then return nil end
+		for _, v in ipairs(char:GetChildren()) do
+			if v:IsA("Tool") then return v end
+		end
+	end
+
+	local function KomutanToolu()
+		if not komutan or not komutan.Character then return nil end
+		for _, v in ipairs(komutan.Character:GetChildren()) do
+			if v:IsA("Tool") then return v end
+		end
+	end
+
+	local function ToolTakibiBagla(komutanTool)
+		if toolConnection then toolConnection:Disconnect(); toolConnection = nil end
+		if not komutanTool then return end
+		toolConnection = komutanTool.Activated:Connect(function()
+			local t = BenimToolum()
+			if t then pcall(function() t:Activate() end) end
+		end)
+	end
+
+	local function ToolDegisiminiIzle()
+		task.spawn(function()
+			while takipAktif do
+				task.wait(0.2)
+				if not komutan or not komutan.Character then continue end
+				local mt = KomutanToolu()
+				if mt ~= oncekiTool then
+					oncekiTool = mt
+					ToolTakibiBagla(mt)
+				end
+			end
+		end)
+	end
+
+	local function tak_komBul()
+		for _, p in ipairs(Players:GetPlayers()) do
+			if p ~= player and p.Character then
+				if p.Team then
+					local t = p.Team.Name
+					if t:find("Ordu Sub") or t:find("Subay") then return p end
+				end
+			end
+		end
+	end
+
+	local function tak_durdur()
+		if not takipAktif then return end
+		if takipBag then takipBag:Disconnect(); takipBag = nil end
+		if toolConnection then toolConnection:Disconnect(); toolConnection = nil end
+		local char = player.Character
+		if char then
+			TakipInstanceleriTemizle(char:FindFirstChild("HumanoidRootPart"))
+			local hum = char:FindFirstChild("Humanoid")
+			if hum then
+				hum.AutoRotate = true
+				hum.WalkSpeed = 16
+			end
+		end
+		takipAktif = false
+		komutan = nil
+		oncekiTool = nil
+	end
+
+	local function tak_basla(hedef)
+		sflKapat()
+		aciKorumayiDurdur()
+		sabitAciBelirlendi = false
+		if takipAktif then tak_durdur() end
+		task.wait(0.05)
+		if humanoid then humanoid.AutoRotate = true end
+
+		komutan = hedef
+		takipAktif = true
+		oncekiTool = nil
+
+		ToolDegisiminiIzle()
+
+		takipBag = RunService.Heartbeat:Connect(function()
+			if not takipAktif then return end
+
+			if not komutan or not komutan.Character then
+				komutan = tak_komBul()
+				if not komutan then return end
+			end
+
+			local kChar = komutan.Character
+			if not kChar then return end
+			local kHRP = kChar:FindFirstChild("HumanoidRootPart")
+			if not kHRP then return end
+
+			local myChar = player.Character
+			if not myChar then return end
+			local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+			local myHum = myChar:FindFirstChild("Humanoid")
+			if not myHRP or not myHum then return end
+
+			local kVel = kHRP.AssemblyLinearVelocity
+			local kGercekHiz = Vector3.new(kVel.X, 0, kVel.Z).Magnitude
+
+			local hedefPoz = (kHRP.CFrame * CFrame.new(0, 0, TAKIP_MESAFESI)).Position
+			hedefPoz = Vector3.new(hedefPoz.X, myHRP.Position.Y, hedefPoz.Z)
+
+			local yon = (hedefPoz - myHRP.Position).Unit
+			local mesafe = (myHRP.Position - hedefPoz).Magnitude
+			local mesafeYatay = (Vector3.new(myHRP.Position.X, 0, myHRP.Position.Z) -
+				Vector3.new(hedefPoz.X, 0, hedefPoz.Z)).Magnitude
+
+			local bv, bg = TakipInstanceleriAl(myHRP)
+
+			if mesafeYatay > 1 then
+				bg.CFrame = CFrame.lookAt(myHRP.Position, hedefPoz)
+			else
+				local kYon = kHRP.CFrame.LookVector
+				bg.CFrame = CFrame.lookAt(myHRP.Position, myHRP.Position + kYon * 5)
+			end
+
+			if mesafe > YAKIN_MESAFE then
+				local takipHizi = kGercekHiz
+				if takipHizi < 2 then takipHizi = 8 end
+				takipHizi = math.min(takipHizi, 32)
+				bv.Velocity = Vector3.new(yon.X * takipHizi, 0, yon.Z * takipHizi)
+			else
+				bv.Velocity = Vector3.zero
+			end
+
+			myHum.AutoRotate = false
+		end)
+	end
+
+	local STS_TAKIM = "Türk Silahlı Kuvvetleri"
+	local STS_ROT = CFrame.Angles(0, math.rad(-90), 0)
+	local sts_padlar = {
+		{pos = Vector3.new(-497.93, 7.84, 260.97), rotY = -90.40}, {pos = Vector3.new(-497.87, 7.84, 254.85), rotY = -90.40},
+		{pos = Vector3.new(-497.82, 7.84, 249.19), rotY = -89.60}, {pos = Vector3.new(-497.80, 7.84, 242.85), rotY = -90.00},
+		{pos = Vector3.new(-497.80, 7.84, 236.99), rotY = -90.00}, {pos = Vector3.new(-497.80, 7.84, 230.99), rotY = -90.00},
+		{pos = Vector3.new(-497.78, 7.84, 224.69), rotY = -88.40}, {pos = Vector3.new(-497.99, 7.83, 218.81), rotY = -90.80},
+		{pos = Vector3.new(-497.91, 7.84, 212.69), rotY = -90.00}, {pos = Vector3.new(-507.82, 7.84, 260.82), rotY = -90.80},
+		{pos = Vector3.new(-507.84, 7.84, 255.16), rotY = -89.20}, {pos = Vector3.new(-507.81, 7.84, 248.76), rotY = -90.00},
+		{pos = Vector3.new(-507.90, 7.84, 242.90), rotY = -90.00}, {pos = Vector3.new(-507.79, 7.84, 237.10), rotY = -89.60},
+		{pos = Vector3.new(-508.01, 7.83, 230.97), rotY = -89.60}, {pos = Vector3.new(-507.93, 7.84, 225.11), rotY = -90.80},
+	}
+	for i, p in ipairs(sts_padlar) do p.cframe = CFrame.new(p.pos) * CFrame.Angles(0, math.rad(p.rotY), 0); p.index = i end
+
+	local sts_curPad = nil
+	local sts_thread = nil
+	local sts_moving = false
+	local sts_bakAkt = false
+	local sts_bakBag = nil
+	local sts_dbnc = false
+
+	local function sts_simdiMi(msg)
+		if msg:find("\197\158imdi") then return true end
+		if msg:find("\197\159imdi") then return true end
+		return msg:find("Simdi") ~= nil or msg:find("simdi") ~= nil or msg:find("SIMDI") ~= nil
+	end
+
+	local function sts_bakBaslat()
+		if sts_bakBag then return end
+		sts_bakAkt = true
+		sts_bakBag = RunService.Heartbeat:Connect(function()
+			if sts_bakAkt and root and root.Parent then
+				root.CFrame = CFrame.new(root.Position) * STS_ROT
+			end
+		end)
+	end
+
+	local function sts_bakDur()
+		sts_bakAkt = false
+		if sts_bakBag then sts_bakBag:Disconnect(); sts_bakBag = nil end
+	end
+
+	local function sts_padBos(pos)
+		local occupiedFromDB = getOccupiedPositions(true)
+		for i, pad in ipairs(sts_padlar) do
+			if (pad.pos - pos).Magnitude < 0.5 then
+				if occupiedFromDB[i] then
+					return false
+				end
+				break
+			end
+		end
+
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= player and p.Team and p.Team.Name == STS_TAKIM then
+				local ch = p.Character
+				if ch and ch:FindFirstChild("HumanoidRootPart") then
+					if (ch.HumanoidRootPart.Position - pos).Magnitude < 3 then
+						return false
+					end
+				end
+			end
+		end
+		return true
+	end
+
+	local function sts_enBos()
+		local occupiedFromDB = getOccupiedPositions(true)
+		for i = 1, #sts_padlar do
+			if not occupiedFromDB[i] and sts_padBos(sts_padlar[i].pos) then
+				return i
+			end
+		end
+		return nil
+	end
+
+	local function sts_gitVeDur(pd)
+		if sts_moving then return end
+		sts_moving = true
+		local c = player.Character
+		if not c then sts_moving = false; return end
+		local h = c:FindFirstChild("HumanoidRootPart")
+		local hum = c:FindFirstChild("Humanoid")
+		if not h or not hum then sts_moving = false; return end
+		local tp = pd.pos + Vector3.new(0, hum.HipHeight, 0)
+		if not sts_padBos(pd.pos) then sts_moving = false; return end
+		hum.WalkSpeed = 20
+		hum:MoveTo(tp)
+		local t0 = tick()
+		local ok = false
+		while tick() - t0 < 8 do
+			task.wait(0.05)
+			if not sts_aktif then
+				hum:MoveTo(h.Position)
+				hum.WalkSpeed = 16
+				sts_moving = false
+				return
+			end
+			if not sts_padBos(pd.pos) then
+				hum:MoveTo(h.Position)
+				hum.WalkSpeed = 16
+				sts_moving = false
+				return
+			end
+			if (h.Position - tp).Magnitude < 1.2 then
+				ok = true
+				break
+			end
+			if tick() - t0 > 2 and (h.Position - tp).Magnitude > 3 then
+				hum:MoveTo(tp)
+			end
+		end
+		hum.WalkSpeed = 16
+		hum:MoveTo(h.Position)
+		if ok and sts_padBos(pd.pos) then
+			task.wait(0.05)
+			yumusakDonus(pd.rotY)
+			sendPosition(pd.index, true)
+		end
+		sts_moving = false
+	end
+
+	local function sts_checkDur()
+		sts_aktif = false
+		if sts_thread then pcall(function() task.cancel(sts_thread) end); sts_thread = nil end
+		pcall(function() if humanoid and root then humanoid:MoveTo(root.Position) end end)
+		sendPosition(0, true)
+	end
+
+	local function sts_checkBas()
+		if sts_thread then return end
+		sts_thread = task.spawn(function()
+			while sts_aktif do
+				pcall(function()
+					local h = sts_enBos()
+					if h then
+						if sts_curPad ~= h then
+							sts_curPad = h
+							sts_gitVeDur(sts_padlar[h])
+						end
+					end
+				end)
+				task.wait(1.5)
+			end
+			sts_thread = nil
+		end)
+	end
+
+	local function sts_bakKapatVeYerlestir()
+		sts_bakDur()
+		pcall(function()
+			local c = player.Character
+			if c and c:FindFirstChild("Humanoid") then
+				c.Humanoid.AutoRotate = true
+			end
+		end)
+		task.spawn(function()
+			task.wait(0.2)
+			if sts_aktif then
+				local bosPozisyon = sts_enBos()
+				if bosPozisyon then
+					sts_gitVeDur(sts_padlar[bosPozisyon])
+				end
+			end
+		end)
+	end
+
+	local function sts_toggle()
+		if sts_dbnc then return end
+		sts_dbnc = true
+		sts_aktif = not sts_aktif
+		if sts_aktif then
+			otomatikKontrolAktif = false
+			if kontrolBaglanti then kontrolBaglanti:Disconnect(); kontrolBaglanti = nil end
+			aciKorumayiDurdur()
+			sabitAciBelirlendi = false
+			isMoving = false
+			currentPozisyonIndex = nil
+			tak_durdur()
+			if humanoid then
+				humanoid.AutoRotate = true
+				humanoid.WalkSpeed = 16
+			end
+			task.wait(0.1)
+
+			sts_curPad = nil
+			sts_bakBaslat()
+			sts_checkBas()
+		else
+			sts_bakDur()
+			sts_checkDur()
+		end
+		playerCache.time = 0
+		updateDisplay()
+		task.wait(0.3)
+		sts_dbnc = false
+	end
+
+	local DON_BAZ = -91
+	local don_yon = {merkez = DON_BAZ, sag = DON_BAZ - 90, sol = DON_BAZ + 90, geri = DON_BAZ + 180}
+	local don_cur = "merkez"
+	local don_busy = false
+	local don_aktifBag = nil
+	local don_baslangic = 0
+	local don_hedefAci = 0
+	local don_suresi = 0
+	local don_basT = 0
+
+	local function don_akilli(sim, hed)
+		if sim == hed then return sim end
+		if (sim == "sag" and hed == "sol") or (sim == "sol" and hed == "sag") then
+			return "merkez"
+		end
+		return hed
+	end
+
+	local function smoothStep(t)
+		t = math.clamp(t, 0, 1)
+		return t * t * (3 - 2 * t)
+	end
+
+	local function don_don(hedefYon)
+		if not root or not root.Parent then return end
+		if don_busy then return end
+		local gercek = don_akilli(don_cur, hedefYon)
+		if gercek == don_cur then return end
+		if don_aktifBag then don_aktifBag:Disconnect(); don_aktifBag = nil end
+		don_busy = true
+		don_baslangic = don_yon[don_cur]
+		don_hedefAci = don_yon[gercek]
+		don_suresi = 0.6 + math.random() * 0.7
+		don_basT = tick()
+		local hedefG = gercek
+		don_aktifBag = RunService.RenderStepped:Connect(function()
+			if not root or not root.Parent then
+				don_aktifBag:Disconnect()
+				don_aktifBag = nil
+				don_busy = false
+				return
+			end
+			local elapsed = tick() - don_basT
+			local t = math.clamp(elapsed / don_suresi, 0, 1)
+			local ease = smoothStep(t)
+			local titreme = (1 - ease) ^ 2 * 3.5 * (math.sin(elapsed * 60) * 0.5 + math.sin(elapsed * 37) * 0.3 + math.sin(elapsed * 89) * 0.2)
+			root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, math.rad(don_baslangic + (don_hedefAci - don_baslangic) * ease + titreme), 0)
+			if t >= 1 then
+				root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, math.rad(don_hedefAci), 0)
+				don_aktifBag:Disconnect()
+				don_aktifBag = nil
+				don_busy = false
+				don_cur = hedefG
+			end
+		end)
+	end
+
+	task.spawn(function()
+		while true do
+			task.wait(5)
+			if don_busy and don_basT > 0 and (tick() - don_basT) > don_suresi + 2 then
+				don_busy = false
+				if don_aktifBag then don_aktifBag:Disconnect(); don_aktifBag = nil end
+				if root and root.Parent then
+					root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, math.rad(don_yon.merkez), 0)
+					don_cur = "merkez"
+				end
+			end
+		end
+	end)
+
+	local FR_URLS = {
+		"https://raw.githubusercontent.com/valoscripter/tanstack-template/refs/heads/main/frames",
+		"https://raw.githubusercontent.com/valoscripter/tanstack-template/refs/heads/main/frames2",
+		"https://raw.githubusercontent.com/valoscripter/tanstack-template/refs/heads/main/frames3",
+	}
+	local FR_PART_POS = {
+		Vector3.new(211.961975, 4.68090057, 544.282776),
+		Vector3.new(661.90625, 5.5970993, -211.553177),
+		Vector3.new(193.427841, 9.68245316, -259.085266),
+	}
+	local FR_STEP = 1.35
+	local FR_WSPD = 26
+	local fr_aktif = false
+	local fr_bitti = false
+	local fr_rs = nil
+	local fr_hb = nil
+	local fr_cache = {}
+	local fr_data = nil
+	local fr_frame = 1
+	local fr_prog = 0
+	local fr_jump = false
+	local fr_jcd = false
+	local fr_curPark = 0
+	local fr_parkurBekliyor = false
+
+	UserInputService.JumpRequest:Connect(function()
+		if fr_aktif then fr_jump = true end
+	end)
+
+	local function fr_toCF(t)
+		return CFrame.new(t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], t[9], t[10], t[11], t[12])
+	end
+
+	local function fr_sm(a, b, s)
+		return a + (b - a) * s
+	end
+
+	local function fr_yukle(no)
+		if fr_cache[no] then return fr_cache[no] end
+		local url = FR_URLS[no]
+		if not url then return nil end
+		local ok, d = pcall(function()
+			return HttpService:JSONDecode(game:HttpGet(url))
+		end)
+		if ok and d and d.frames then
+			fr_cache[no] = d.frames
+			return d.frames
+		end
+		return nil
+	end
+
+	local function fr_ac(no)
+		if fr_bitti or fr_aktif then return end
+		local data = fr_yukle(no)
+		if not data then return end
+		fr_data = data
+		fr_aktif = true
+		fr_frame = 1
+		fr_prog = 0
+		fr_jump = false
+		fr_curPark = no
+		if humanoid then
+			humanoid.WalkSpeed = FR_WSPD
+			humanoid.JumpPower = 50
+			humanoid.UseJumpPower = true
+			humanoid.AutoRotate = true
+		end
+
+		fr_rs = RunService.RenderStepped:Connect(function(dt)
+			if not fr_aktif or not fr_data then return end
+			if fr_frame >= #fr_data then
+				fr_aktif = false
+				fr_bitti = true
+				if fr_rs then fr_rs:Disconnect(); fr_rs = nil end
+				if fr_hb then fr_hb:Disconnect(); fr_hb = nil end
+				if humanoid then humanoid.WalkSpeed = 16 end
+				return
+			end
+			fr_prog = fr_prog + FR_STEP * dt * 60
+			while fr_prog >= 1 and fr_frame < #fr_data do
+				fr_prog = fr_prog - 1
+				fr_frame = fr_frame + 1
+			end
+			if fr_frame < #fr_data then
+				local f = fr_data[fr_frame]
+				local nf = fr_data[fr_frame + 1]
+				if f.v and nf.v then
+					local dir = Vector3.new(nf.v[1], 0, nf.v[3])
+					if dir.Magnitude > 0.1 and humanoid then
+						humanoid:Move(dir.Unit, false)
+					end
+				end
+				if fr_jump and not fr_jcd and f.v and nf.v then
+					local nvy = nf.v[2] or 0
+					if nvy > 0.5 and humanoid then
+						fr_jump = false
+						fr_jcd = true
+						humanoid.Jump = true
+						task.delay(0.3, function() fr_jcd = false end)
+					end
+				end
+				if f.cf and nf.cf and root then
+					local tc = fr_toCF(f.cf):Lerp(fr_toCF(nf.cf), fr_prog)
+					root.CFrame = tc
+				end
+				if f.cam and nf.cam then
+					local cam = workspace.CurrentCamera
+					if cam then
+						local tc2 = fr_toCF(f.cam):Lerp(fr_toCF(nf.cam), fr_prog)
+						cam.CFrame = tc2
+					end
+				end
+			end
+			if fr_jump and humanoid and humanoid.FloorMaterial ~= Enum.Material.Air then
+				fr_jump = false
+			end
+		end)
+
+		fr_hb = RunService.Heartbeat:Connect(function(dt)
+			if not fr_aktif or not root then return end
+			if humanoid and humanoid.FloorMaterial ~= Enum.Material.Air then
+				root.RotVelocity = Vector3.zero
+			end
+		end)
+	end
+
+	local function fr_enYakin()
+		if not root then return 1 end
+		local pos = root.Position
+		local enYakin = 1
+		local enMes = math.huge
+		for i, p in ipairs(FR_PART_POS) do
+			local mes = (pos - p).Magnitude
+			if mes < enMes then
+				enMes = mes
+				enYakin = i
+			end
+		end
+		return enYakin
+	end
+
+	local function fr_parkurTextAlgilandi()
+		if fr_bitti or fr_parkurBekliyor or fr_aktif then return end
+		fr_parkurBekliyor = true
+		task.spawn(function()
+			task.wait(0)
+			fr_parkurBekliyor = false
+			fr_ac(fr_enYakin())
+		end)
+	end
+
+	local function parkurMu(t)
+		if not t then return false end
+		return t:match("^%s*[Pp]arkur%s*$") ~= nil
+	end
+
+	local function ileriMi(t)
+		if not t then return false end
+		local k = t:lower():gsub("%s+", "")
+		for _, v in ipairs({"ileri", "mars", "marş", "ilerimars", "ilerimarş"}) do
+			if k == v then return true end
+		end
+		if k:find("ileri", 1, true) and #k <= 12 then return true end
+		return false
+	end
+
+	local function komutIsle(text)
+		if not text or text == "" then return end
+
+		if sts_simdiMi(text) then
+			sts_bakKapatVeYerlestir()
+			return
+		end
+
+		if ileriMi(text) then
+			sflKapat()
+			aciKorumayiDurdur()
+			sabitAciBelirlendi = false
+			if humanoid then
+				humanoid.AutoRotate = true
+				humanoid.WalkSpeed = 16
+			end
+			local h = tak_komBul()
+			if h then tak_basla(h) end
+			return
+		end
+
+		if parkurMu(text) then
+			fr_parkurTextAlgilandi()
+			return
+		end
+
+		local kk = text:lower():gsub("%s+", "")
+
+		if kk == "sag" or kk == "sağ" or kk == "right" then
+			don_don("sag")
+			return
+		end
+		if kk == "sol" or kk == "left" then
+			don_don("sol")
+			return
+		end
+		if kk == "geri" or kk == "back" or kk == "arka" then
+			don_don("geri")
+			return
+		end
+		if kk == "merkez" or kk == "center" or kk == "on" then
+			don_don("merkez")
+			return
+		end
+
+		if kk == "sfl" or kk == "tsk" then
+			tak_durdur()
+			sflAc()
+			return
+		end
+
+		if kk == "sflkapat" or kk == "tskkapat" then
+			sflKapat()
+			return
+		end
+
+		local idx = text:lower():match("sfl git (%d+)") or text:lower():match("tsk git (%d+)")
+		if idx then
+			idx = tonumber(idx)
+			if idx and idx >= 1 and idx <= TOPLAM_POZISYON then
+				if takipAktif then tak_durdur() end
+				pozisyonDegistir(idx, false)
+			end
+			return
+		end
+
+		if kk == "sts" then
+			sflKapat()
+			tak_durdur()
+			task.wait(0.05)
+			if not sts_aktif then
+				sts_toggle()
+			end
+			return
+		end
+	end
+
+	local izlenen = {}
+	local function guiHook(obj)
+		if izlenen[obj] then return end
+		if not (obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton")) then return end
+		if chatMi(obj) then return end
+
+		local inPG = false
+		local r = obj
+		while r do
+			if r == player.PlayerGui then inPG = true; break end
+			r = r.Parent
+		end
+		if not inPG then return end
+
+		izlenen[obj] = true
+		obj:GetPropertyChangedSignal("Text"):Connect(function()
+			if obj.Text and obj.Text ~= "" then komutIsle(obj.Text) end
+		end)
+		if obj:IsA("TextButton") then
+			obj.MouseButton1Click:Connect(function()
+				if obj.Text and obj.Text ~= "" then komutIsle(obj.Text) end
+			end)
+		end
+	end
+
+	local CHAT_ANAHTAR = {
+		"chat", "message", "sohbet", "mesaj", "textchat",
+		"bubble", "speakergui", "dialoggui", "chatframe",
+		"chatmain", "chatbar", "chatwindow", "chatbox",
+	}
+
+	local function chatMi(obj)
+		if not obj then return false end
+		local ok, r = pcall(function() return obj:IsDescendantOf(TextChatService) end)
+		if ok and r then return true end
+		local cur = obj
+		while cur and cur ~= game do
+			local ad = cur.Name:lower()
+			for _, k in ipairs(CHAT_ANAHTAR) do
+				if ad:find(k, 1, true) then return true end
+			end
+			local ok2, res = pcall(function() return cur.Parent end)
+			if not ok2 then break end
+			cur = res
+		end
+		return false
+	end
+
+	pcall(function()
+		for _, obj in pairs(player.PlayerGui:GetDescendants()) do
+			pcall(function() guiHook(obj) end)
+		end
+	end)
+	player.PlayerGui.DescendantAdded:Connect(function(obj)
+		task.wait(0.05)
+		pcall(function() guiHook(obj) end)
+	end)
+
+	for _, d in pairs(game:GetDescendants()) do
+		if d:IsA("RemoteEvent") then
+			pcall(function()
+				d.OnClientEvent:Connect(function(...)
+					for _, a in pairs({...}) do
+						if type(a) == "string" then
+							komutIsle(a)
+						elseif type(a) == "table" then
+							for _, s in pairs(a) do
+								if type(s) == "string" then komutIsle(s) end
+							end
+						end
+					end
+				end)
+			end)
+		end
+	end
+	game.DescendantAdded:Connect(function(d)
+		if d:IsA("RemoteEvent") then
+			pcall(function()
+				d.OnClientEvent:Connect(function(...)
+					for _, a in pairs({...}) do
+						if type(a) == "string" then
+							komutIsle(a)
+						elseif type(a) == "table" then
+							for _, s in pairs(a) do
+								if type(s) == "string" then komutIsle(s) end
+							end
+						end
+					end
+				end)
+			end)
+		end
+	end)
+
+	task.spawn(function()
+		local oncekiYazi = ""
+		while true do
+			task.wait(0.3)
+			local label = nil
+			local pg = player:FindFirstChild("PlayerGui")
+			if pg then
+				local function Ara(p)
+					for _, c in ipairs(p:GetChildren()) do
+						if c:IsA("TextLabel") and c.Name == "Yazı" then return c end
+						local s = Ara(c)
+						if s then return s end
+					end
+				end
+				label = Ara(pg)
+			end
+			if not label then continue end
+			local mevcutYazi = label.Text or ""
+			if mevcutYazi == oncekiYazi then continue end
+			oncekiYazi = mevcutYazi
+			local ilk = mevcutYazi:match("^%s*(%S+)") or ""
+			local ileri = ilk == "İleri," or ilk == "ileri," or ilk == "İleri" or ilk == "ileri" or ilk == "İleri!" or ilk == "ileri!"
+			if ileri then
+				sflKapat()
+				aciKorumayiDurdur()
+				sabitAciBelirlendi = false
+				if humanoid then
+					humanoid.AutoRotate = true
+					humanoid.WalkSpeed = 16
+				end
+				local hedef = tak_komBul()
+				if hedef then tak_basla(hedef) end
+			else
+				tak_durdur()
+			end
+		end
+	end)
+
+	player.CharacterAdded:Connect(function(c)
+		task.wait(0.5)
+		root = c:WaitForChild("HumanoidRootPart")
+		humanoid = c:WaitForChild("Humanoid")
+		task.wait(0.5)
+
+		for i, pozisyon in ipairs(pozisyonlar) do
+			if not pozisyonTriggers[i] or not pozisyonTriggers[i].Parent then
+				pozisyonTriggerOlustur(i, pozisyon.cframe)
+			end
+		end
+
+		currentPozisyonIndex = nil
+		isMoving = false
+
+		tak_durdur()
+		if sts_aktif then sts_aktif = false; sts_bakDur() end
+
+		if humanoid then
+			humanoid.AutoRotate = true
+			humanoid.WalkSpeed = 16
+		end
+
+		aciKorumayiDurdur()
+		sabitAciBelirlendi = false
+		sabitBakisAcisi = 180
+	end)
+
+	for i, pozisyon in ipairs(pozisyonlar) do
+		pozisyonTriggerOlustur(i, pozisyon.cframe)
+	end
+
+	local function main()
+		local success = sendPosition(0, false)
+		if success then
+			wait(1)
+			updateDisplay()
+
+			while true do
+				task.wait(3)
+				updateDisplay()
+			end
+		else
+		end
+	end
+
+	task.spawn(main)
+
+	local sayiCevapCooldown = false
+
+	local function subaylarSohbetDinle()
+		local tcs = game:GetService("TextChatService")
+		pcall(function()
+			tcs.MessageReceived:Connect(function(msg)
+				if sayiCevapCooldown then return end
+				local sender = msg.TextSource
+				if not sender then return end
+				local senderPlayer = Players:GetPlayerByUserId(sender.UserId)
+				if not senderPlayer then return end
+				if senderPlayer == player then return end
+				local basari, takim = pcall(function() return senderPlayer.Team end)
+				if not basari or not takim then return end
+				if takim.Name ~= "Ordu Subayları" then return end
+				local temiz = msg.Text or ""
+				if temiz:find("1") or temiz:find("2") or temiz:find("3") then
+					sayiCevapCooldown = true
+					task.spawn(function()
+						task.wait(2)
+						pcall(function()
+							local channel = tcs.TextChannels:FindFirstChild("RBXGeneral")
+							if channel then
+								channel:SendAsync("1")
+							end
+						end)
+						task.wait(3)
+						sayiCevapCooldown = false
+					end)
+				end
+			end)
+		end)
+	end
+
+	subaylarSohbetDinle()
+end
