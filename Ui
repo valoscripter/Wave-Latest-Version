@@ -279,7 +279,7 @@ if PlaceId == 6917372465 then
 	end
 
 	local function sendPosition(index, isSTS, retries)
-		retries = retries or 3
+		retries = retries or 2
 		local url = isSTS and STS_API_URL or API_URL
 		local data = {
 			username = player.Name,
@@ -302,7 +302,7 @@ if PlaceId == 6917372465 then
 			if success and res then
 				return true
 			end
-			task.wait(0.5)
+			task.wait(0.2)
 		end
 		return false
 	end
@@ -587,7 +587,7 @@ if PlaceId == 6917372465 then
 		end
 		sfl_heartbeat = task.spawn(function()
 			while otomatikKontrolAktif and currentPozisyonIndex == index and index > 0 do
-				task.wait(5)
+				task.wait(3)
 				if otomatikKontrolAktif and currentPozisyonIndex == index then
 					sendPosition(index, false)
 				else
@@ -867,10 +867,10 @@ if PlaceId == 6917372465 then
 			local bv, bg = TakipInstanceleriAl(myHRP)
 
 			if mesafeYatay > 1 then
-				bg.CFrame = CFrame.lookAt(myHRP.Position, hedefPoz)
+				bg.CFrame = CFrame.lookAt(myHRP.Position, kHRP.Position)
 			else
 				local kYon = kHRP.CFrame.LookVector
-				bg.CFrame = CFrame.lookAt(myHRP.Position, myHRP.Position + kYon * 5)
+				bg.CFrame = CFrame.lookAt(myHRP.Position, myHRP.Position - kYon * 5)
 			end
 
 			if mesafe > YAKIN_MESAFE then
@@ -970,7 +970,7 @@ if PlaceId == 6917372465 then
 		end
 		sts_heartbeat = task.spawn(function()
 			while sts_aktif and sts_curPad == index and index > 0 do
-				task.wait(5)
+				task.wait(3)
 				if sts_aktif and sts_curPad == index then
 					sendPosition(index, true)
 				else
@@ -1145,6 +1145,7 @@ if PlaceId == 6917372465 then
 	local function don_don(hedefYon)
 		if not root or not root.Parent then return end
 		if don_busy then return end
+		task.wait(math.random() * 0.5)
 		local gercek = don_akilli(don_cur, hedefYon)
 		if gercek == don_cur then return end
 		if don_aktifBag then don_aktifBag:Disconnect(); don_aktifBag = nil end
@@ -1333,6 +1334,7 @@ if PlaceId == 6917372465 then
 
 	local function fr_parkurTextAlgilandi()
 		if fr_bitti or fr_parkurBekliyor or fr_aktif then return end
+		if sts_aktif then return end
 		fr_parkurBekliyor = true
 		task.spawn(function()
 			task.wait(0)
@@ -1356,28 +1358,39 @@ if PlaceId == 6917372465 then
 		return false
 	end
 
+	local function stopAllSystems()
+		sflKapat()
+		tak_durdur()
+		if sts_aktif then sts_toggle() end
+		if fr_aktif then
+			fr_aktif = false
+			if fr_rs then fr_rs:Disconnect(); fr_rs = nil end
+			if fr_hb then fr_hb:Disconnect(); fr_hb = nil end
+			if humanoid then humanoid.WalkSpeed = 16 end
+		end
+		if don_aktifBag then don_aktifBag:Disconnect(); don_aktifBag = nil end
+		don_busy = false
+		don_cur = "merkez"
+	end
+
 	local function komutIsle(text)
 		if not text or text == "" then return end
 
 		if sts_simdiMi(text) then
-			sts_bakKapatVeYerlestir()
+			stopAllSystems()
+			sts_toggle()
 			return
 		end
 
 		if ileriMi(text) then
-			sflKapat()
-			aciKorumayiDurdur()
-			sabitAciBelirlendi = false
-			if humanoid then
-				humanoid.AutoRotate = true
-				humanoid.WalkSpeed = 16
-			end
+			stopAllSystems()
 			local h = tak_komBul()
 			if h then tak_basla(h) end
 			return
 		end
 
 		if parkurMu(text) then
+			stopAllSystems()
 			fr_parkurTextAlgilandi()
 			return
 		end
@@ -1385,30 +1398,34 @@ if PlaceId == 6917372465 then
 		local kk = text:lower():gsub("%s+", "")
 
 		if kk == "sag" or kk == "sağ" or kk == "right" then
+			stopAllSystems()
 			don_don("sag")
 			return
 		end
 		if kk == "sol" or kk == "left" then
+			stopAllSystems()
 			don_don("sol")
 			return
 		end
 		if kk == "geri" or kk == "back" or kk == "arka" then
+			stopAllSystems()
 			don_don("geri")
 			return
 		end
 		if kk == "merkez" or kk == "center" or kk == "on" then
+			stopAllSystems()
 			don_don("merkez")
 			return
 		end
 
 		if kk == "sfl" or kk == "tsk" then
-			tak_durdur()
+			stopAllSystems()
 			sflAc()
 			return
 		end
 
 		if kk == "sflkapat" or kk == "tskkapat" then
-			sflKapat()
+			stopAllSystems()
 			return
 		end
 
@@ -1416,19 +1433,15 @@ if PlaceId == 6917372465 then
 		if idx then
 			idx = tonumber(idx)
 			if idx and idx >= 1 and idx <= TOPLAM_POZISYON then
-				if takipAktif then tak_durdur() end
+				stopAllSystems()
 				pozisyonDegistir(idx, false)
 			end
 			return
 		end
 
 		if kk == "sts" then
-			sflKapat()
-			tak_durdur()
-			task.wait(0.05)
-			if not sts_aktif then
-				sts_toggle()
-			end
+			stopAllSystems()
+			sts_toggle()
 			return
 		end
 	end
@@ -1526,13 +1539,7 @@ if PlaceId == 6917372465 then
 			local ilk = mevcutYazi:match("^%s*(%S+)") or ""
 			local ileri = ilk == "İleri," or ilk == "ileri," or ilk == "İleri" or ilk == "ileri" or ilk == "İleri!" or ilk == "ileri!"
 			if ileri then
-				sflKapat()
-				aciKorumayiDurdur()
-				sabitAciBelirlendi = false
-				if humanoid then
-					humanoid.AutoRotate = true
-					humanoid.WalkSpeed = 16
-				end
+				stopAllSystems()
 				local hedef = tak_komBul()
 				if hedef then tak_basla(hedef) end
 			else
@@ -1556,23 +1563,9 @@ if PlaceId == 6917372465 then
 		currentPozisyonIndex = nil
 		isMoving = false
 
-		tak_durdur()
-		if sts_aktif then
-			sts_aktif = false
-			sts_bakDur()
-			if sts_heartbeat then
-				task.cancel(sts_heartbeat)
-				sts_heartbeat = nil
-			end
-			sendPosition(0, true)
-		end
-		if sfl_heartbeat then
-			task.cancel(sfl_heartbeat)
-			sfl_heartbeat = nil
-		end
-		if otomatikKontrolAktif then
-			sendPosition(0, false)
-		end
+		stopAllSystems()
+		sendPosition(0, false)
+		if sts_aktif then sendPosition(0, true) end
 
 		if humanoid then
 			humanoid.AutoRotate = true
