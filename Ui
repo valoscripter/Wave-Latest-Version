@@ -188,32 +188,6 @@ if PlaceId == 6917372465 then
 	local playerCache = {data = nil, time = 0}
 	local PLAYER_CACHE_SURE = 3
 
-	local function createUICorner(p, r)
-		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, r or 8)
-		c.Parent = p
-		return c
-	end
-
-	local function createStroke(p, thickness, color)
-		local stroke = Instance.new("UIStroke")
-		stroke.Thickness = thickness
-		stroke.Color = color
-		stroke.Parent = p
-		return stroke
-	end
-
-	local function createProfileImage(userId, size)
-		local img = Instance.new("ImageLabel")
-		img.Size = size or UDim2.new(0, 45, 0, 45)
-		img.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-		img.BackgroundTransparency = 0
-		img.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. userId .. "&width=100&height=100&format=png"
-		img.ScaleType = Enum.ScaleType.Fit
-		img.ClipsDescendants = true
-		return img
-	end
-
 	local CHAT_ANAHTAR = {
 		"chat", "message", "sohbet", "mesaj", "textchat",
 		"bubble", "speakergui", "dialoggui", "chatframe",
@@ -271,6 +245,9 @@ if PlaceId == 6917372465 then
 
 	local pozisyonTriggers = {}
 
+	local sfl_heartbeat = nil
+	local sts_heartbeat = nil
+
 	local function httpRequest(args)
 		if syn and syn.request then
 			return syn.request(args)
@@ -301,7 +278,8 @@ if PlaceId == 6917372465 then
 		end
 	end
 
-	local function sendPosition(index, isSTS)
+	local function sendPosition(index, isSTS, retries)
+		retries = retries or 3
 		local url = isSTS and STS_API_URL or API_URL
 		local data = {
 			username = player.Name,
@@ -312,15 +290,21 @@ if PlaceId == 6917372465 then
 			isSTS = isSTS or false
 		}
 		local json = HttpService:JSONEncode(data)
-		local success, res = pcall(function()
-			return httpRequest({
-				Url = url,
-				Method = "POST",
-				Headers = {["Content-Type"] = "application/json"},
-				Body = json
-			})
-		end)
-		return success and res ~= nil
+		for attempt = 1, retries do
+			local success, res = pcall(function()
+				return httpRequest({
+					Url = url,
+					Method = "POST",
+					Headers = {["Content-Type"] = "application/json"},
+					Body = json
+				})
+			end)
+			if success and res then
+				return true
+			end
+			task.wait(0.5)
+		end
+		return false
 	end
 
 	local function getOccupiedPositions(isSTS)
@@ -366,6 +350,63 @@ if PlaceId == 6917372465 then
 		cache.time = simdi
 
 		return occupied
+	end
+
+	local function findSameJobIdPlayer(isSTS)
+		local simdi = os.time()
+		if simdi - playerCache.time < PLAYER_CACHE_SURE then
+			return playerCache.data
+		end
+
+		local url = isSTS and STS_API_URL or API_URL
+		local success, res = pcall(function()
+			return httpRequest({Url = url, Method = "GET"})
+		end)
+
+		if not success or not res then
+			return playerCache.data
+		end
+
+		local decodeSuccess, data = pcall(function()
+			return HttpService:JSONDecode(res.Body)
+		end)
+
+		if not decodeSuccess or type(data) ~= "table" then
+			return playerCache.data
+		end
+
+		local currentJobId = game.JobId
+		local foundPlayer = nil
+		local latestTimestamp = 0
+
+		for _, item in pairs(data) do
+			if type(item) == "table" and item.jobId and item.username and item.userId then
+				if item.jobId == currentJobId and item.userId ~= player.UserId then
+					if not isSTS and item.isSTS then
+					elseif isSTS and not item.isSTS then
+					else
+						local timestamp = item.timestamp or 0
+						if timestamp > latestTimestamp then
+							latestTimestamp = timestamp
+							foundPlayer = {
+								username = item.username,
+								userId = item.userId,
+								timestamp = timestamp
+							}
+						end
+					end
+				end
+			end
+		end
+
+		playerCache.data = foundPlayer
+		playerCache.time = simdi
+
+		return foundPlayer
+	end
+
+	local function updateDisplay()
+		local found = findSameJobIdPlayer(sts_aktif)
 	end
 
 	local function karakterGuncelle(char)
@@ -526,10 +567,35 @@ if PlaceId == 6917372465 then
 			humanoid.AutoRotate = true
 		end
 		isMoving = false
+		if currentPozisyonIndex then
+			sendPosition(0, false)
+		end
 		currentPozisyonIndex = nil
 		if kontrolBaglanti then kontrolBaglanti:Disconnect(); kontrolBaglanti = nil end
 		aciKorumayiDurdur()
 		sabitAciBelirlendi = false
+		if sfl_heartbeat then
+			task.cancel(sfl_heartbeat)
+			sfl_heartbeat = nil
+		end
+	end
+
+	local function startSFLHeartbeat(index)
+		if sfl_heartbeat then
+			task.cancel(sfl_heartbeat)
+			sfl_heartbeat = nil
+		end
+		sfl_heartbeat = task.spawn(function()
+			while otomatikKontrolAktif and currentPozisyonIndex == index and index > 0 do
+				task.wait(5)
+				if otomatikKontrolAktif and currentPozisyonIndex == index then
+					sendPosition(index, false)
+				else
+					break
+				end
+			end
+			sfl_heartbeat = nil
+		end)
 	end
 
 	local function pozisyonDegistir(hedefIndex, isSTS)
@@ -539,6 +605,8 @@ if PlaceId == 6917372465 then
 
 		local hedefKayit = pozisyonlar[hedefIndex]
 		if not hedefKayit then return false end
+
+		sendPosition(hedefIndex, isSTS)
 
 		local dolu, _, _ = pozisyonDoluMu(hedefIndex, true, isSTS)
 		if dolu then return false end
@@ -592,6 +660,9 @@ if PlaceId == 6917372465 then
 
 			currentPozisyonIndex = hedefIndex
 			sendPosition(hedefIndex, isSTS)
+			if not isSTS then
+				startSFLHeartbeat(hedefIndex)
+			end
 		end
 		isMoving = false
 		return ulasildi
@@ -892,6 +963,24 @@ if PlaceId == 6917372465 then
 		return nil
 	end
 
+	local function startSTSHeartbeat(index)
+		if sts_heartbeat then
+			task.cancel(sts_heartbeat)
+			sts_heartbeat = nil
+		end
+		sts_heartbeat = task.spawn(function()
+			while sts_aktif and sts_curPad == index and index > 0 do
+				task.wait(5)
+				if sts_aktif and sts_curPad == index then
+					sendPosition(index, true)
+				else
+					break
+				end
+			end
+			sts_heartbeat = nil
+		end)
+	end
+
 	local function sts_gitVeDur(pd)
 		if sts_moving then return end
 		sts_moving = true
@@ -902,6 +991,14 @@ if PlaceId == 6917372465 then
 		if not h or not hum then sts_moving = false; return end
 		local tp = pd.pos + Vector3.new(0, hum.HipHeight, 0)
 		if not sts_padBos(pd.pos) then sts_moving = false; return end
+
+		sendPosition(pd.index, true)
+
+		if not sts_padBos(pd.pos) then
+			sts_moving = false
+			return
+		end
+
 		hum.WalkSpeed = 20
 		hum:MoveTo(tp)
 		local t0 = tick()
@@ -934,15 +1031,24 @@ if PlaceId == 6917372465 then
 			task.wait(0.05)
 			yumusakDonus(pd.rotY)
 			sendPosition(pd.index, true)
+			sts_curPad = pd.index
+			startSTSHeartbeat(pd.index)
 		end
 		sts_moving = false
 	end
 
 	local function sts_checkDur()
 		sts_aktif = false
+		if sts_curPad then
+			sendPosition(0, true)
+			sts_curPad = nil
+		end
 		if sts_thread then pcall(function() task.cancel(sts_thread) end); sts_thread = nil end
 		pcall(function() if humanoid and root then humanoid:MoveTo(root.Position) end end)
-		sendPosition(0, true)
+		if sts_heartbeat then
+			task.cancel(sts_heartbeat)
+			sts_heartbeat = nil
+		end
 	end
 
 	local function sts_checkBas()
@@ -1451,7 +1557,22 @@ if PlaceId == 6917372465 then
 		isMoving = false
 
 		tak_durdur()
-		if sts_aktif then sts_aktif = false; sts_bakDur() end
+		if sts_aktif then
+			sts_aktif = false
+			sts_bakDur()
+			if sts_heartbeat then
+				task.cancel(sts_heartbeat)
+				sts_heartbeat = nil
+			end
+			sendPosition(0, true)
+		end
+		if sfl_heartbeat then
+			task.cancel(sfl_heartbeat)
+			sfl_heartbeat = nil
+		end
+		if otomatikKontrolAktif then
+			sendPosition(0, false)
+		end
 
 		if humanoid then
 			humanoid.AutoRotate = true
@@ -1468,7 +1589,7 @@ if PlaceId == 6917372465 then
 	end
 
 	local function main()
-		local success = sendPosition(0, false)
+		sendPosition(0, false)
 	end
 
 	task.spawn(main)
